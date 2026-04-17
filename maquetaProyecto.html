@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Medicronos</title>
+    <style>
+        body{
+            margin:0;
+            font-family: Arial, sans-serif;
+            background:white;
+            color:black;
+        }
+
+        .sidebar{
+            width:200px;
+            height:100vh;
+            position:fixed;
+            left:0;
+            top:0;
+            border-right:1px solid black;
+            padding:20px;
+        }
+
+        .sidebar a, .sidebar button{
+            display:block;
+            margin:15px 0;
+            color:black;
+            text-decoration:none;
+            background:white;
+            border:1px solid black;
+            padding:5px;
+            cursor:pointer;
+        }
+
+        .main{
+            margin-left:220px;
+            padding:20px;
+        }
+
+        table{
+            width:100%;
+            border-collapse:collapse;
+        }
+
+        th, td{
+            border:1px solid black;
+            padding:8px;
+            text-align:left;
+        }
+
+        h1{
+            font-size:40px;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="sidebar">
+    <h3>Menú</h3>
+    <a href="#">Programar cita</a>
+    <a href="#">Ver gráfica</a>
+    <button>Cerrar sesión</button>
+</div>
+
+<div class="main">
+
+    <h1>Medicronos</h1>
+
+    <h2>Mis citas</h2>
+
+    <table>
+        <tr>
+            <th>Fecha</th>
+            <th>Tipo</th>
+            <th>Estado</th>
+        </tr>
+        <tr>
+            <td>10/03/2026</td>
+            <td>Salud</td>
+            <td>Pendiente</td>
+        </tr>
+        <tr>
+            <td>12/03/2026</td>
+            <td>Estudio</td>
+            <td>Completada</td>
+        </tr>
+    </table>
+
+</div>
+
+</body>
+</html>
