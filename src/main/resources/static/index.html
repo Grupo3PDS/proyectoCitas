@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Medicronos - Citas Médicas</title>
+    <!-- Fuente moderna e impecable de Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* Variables CSS para facilitar cambios y la paleta de colores pedida. */
+        :root {
+            --azul-oscuro: #003366;
+            --verde-jade: #00A86B;
+            --blanco: #ffffff;
+            --fondo-gris: #f4f7f6;
+            --texto-negro: #111111;
+            --texto-gris: #555555;
+            --borde-suave: #e0e0e0;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', Arial, sans-serif;
+            color: var(--texto-negro);
+        }
+
+        body {
+            background-color: var(--fondo-gris);
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* --- Barra Lateral (Sidebar) --- */
+        .barra-lateral {
+            width: 250px;
+            background-color: var(--blanco);
+            box-shadow: 4px 0 15px rgba(0,0,0,0.05); /* Efecto de sombra suave */
+            padding: 30px 20px;
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            height: 100vh;
+            left: 0;
+            top: 0;
+            z-index: 10;
+        }
+
+        .logo-contenedor {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .logo-contenedor h2 {
+            color: var(--azul-oscuro);
+            font-size: 28px;
+            font-weight: 700;
+            letter-spacing: 1px;
+        }
+
+        .logo-contenedor span {
+            color: var(--verde-jade);
+        }
+
+        .menu-navegacion {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            flex-grow: 1; /* Empuja el botón de cerrar sesión hacia abajo */
+        }
+
+        /* Botones del menú */
+        .btn-menu {
+            display: flex;
+            align-items: center;
+            width: 100%;
+            background: none;
+            border: none;
+            padding: 12px 15px;
+            font-size: 16px;
+            font-weight: 500;
+            text-align: left;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: all 0.3s ease; /* Transición suave para pasar el ratón */
+            color: var(--texto-gris);
+        }
+
+        .btn-menu:hover {
+            background-color: rgba(0, 168, 107, 0.1); 
+            color: var(--verde-jade);
+        }
+
+        .btn-menu.activo {
+            background-color: var(--azul-oscuro);
+            color: var(--blanco);
+        }
+
+        /* Botón estilo primario para programar cita */
+        .btn-primario {
+            background-color: var(--verde-jade);
+            color: var(--blanco);
+            border: none;
+            padding: 12px 20px;
+            font-size: 16px;
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.1s;
+            box-shadow: 0 4px 10px rgba(0, 168, 107, 0.3);
+            margin-bottom: 25px;
+        }
+
+        .btn-primario:hover {
+            background-color: #008f5a;
+            transform: translateY(-2px);
+            color: var(--blanco);
+        }
+
+        .btn-cerrar-sesion {
+            margin-top: auto;
+            color: #d32f2f;
+        }
+
+        .btn-cerrar-sesion:hover {
+            background-color: rgba(211, 47, 47, 0.1);
+            color: #b71c1c;
+        }
+
+        /* --- Contenido Principal --- */
+        .contenido-principal {
+            margin-left: 250px;
+            padding: 40px;
+            width: calc(100% - 250px);
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Encabezado */
+        .encabezado {
+            margin-bottom: 30px;
+        }
+
+        .encabezado h1 {
+            font-size: 32px;
+            color: var(--azul-oscuro);
+            margin-bottom: 5px;
+        }
+
+        .encabezado p {
+            font-size: 16px;
+            color: var(--texto-gris);
+        }
+
+        /* Vistas / Pestañas */
+        .vista {
+            display: none; /* Ocultamos todas por defecto */
+            background-color: var(--blanco);
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+            padding: 30px;
+            animation: aparecer 0.4s ease-out; /* Pequeña animación al cambiar pestaña */
+        }
+
+        .vista.activa {
+            display: block; /* Mostramos solo la activa */
+        }
+
+        @keyframes aparecer {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* --- Tabla de Citas --- */
+        .tabla-contenedor {
+            width: 100%;
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+        }
+
+        thead {
+            background-color: var(--fondo-gris);
+        }
+
+        th {
+            padding: 15px;
+            font-size: 14px;
+            color: var(--texto-gris);
+            font-weight: 600;
+            text-transform: uppercase;
+            border-bottom: 2px solid var(--borde-suave);
+        }
+
+        td {
+            padding: 18px 15px;
+            font-size: 15px;
+            border-bottom: 1px solid var(--borde-suave);
+            vertical-align: middle;
+        }
+
+        tr:hover {
+            background-color: #fafafa;
+        }
+
+        /* Etiquetas de estado */
+        .estado {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            text-align: center;
+        }
+
+        .estado.pendiente {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+
+        .estado.completada {
+            background-color: #d4edda;
+            color: #155724;
+        }
+
+        .estado.cancelada {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+
+        /* Contenido Vista Estadísticas */
+        .vista-vacia {
+            text-align: center;
+            padding: 60px 0;
+            color: var(--texto-gris);
+        }
+
+        .vista-vacia h3 {
+            margin-bottom: 15px;
+            color: var(--azul-oscuro);
+        }
+
+    </style>
+</head>
+<body>
+
+    <!-- Barra lateral de navegación -->
+    <aside class="barra-lateral">
+        <div class="logo-contenedor">
+            <h2>Medi<span>cronos</span></h2>
+        </div>
+
+        <button class="btn-primario" onclick="alert('Función de programar cita próximamente.')">
+            + Programar cita
+        </button>
+
+        <nav class="menu-navegacion">
+            <button class="btn-menu activo" onclick="cambiarPestaña('pestaña-citas', this)">Mis Citas</button>
+            <button class="btn-menu" onclick="cambiarPestaña('pestaña-estadisticas', this)">Estadísticas</button>
+        </nav>
+
+        <button class="btn-menu btn-cerrar-sesion" onclick="cerrarSesion()">Cerrar sesión</button>
+    </aside>
+
+    <!-- Contenedor del área de trabajo -->
+    <main class="contenido-principal">
+        
+        <div class="encabezado">
+            <h1>Bienvenido a su cuenta</h1>
+            <p>Revise el estado de sus citas y acceda a las gráficas</p>
+        </div>
+
+        <!-- Pestaña de citas (Listado de información) -->
+        <section id="pestaña-citas" class="vista activa">
+            <h2 style="margin-bottom: 20px; color: var(--azul-oscuro);">Citas Disponibles</h2>
+            
+            <div class="tabla-contenedor">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Fecha y Hora</th>
+                            <th>Tipo de Cita</th>
+                            <th>Lugar</th>
+                            <th>Descripción</th>
+                            <th>Estado</th>
+                        </tr>
+                    </thead>
+                    <tbody id="cuerpo-tabla-citas">
+                        <!-- Las filas de la tabla se insertarán aquí dinámicamente mediante JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Pestaña de estadísticas (Vacía por ahora) -->
+        <section id="pestaña-estadisticas" class="vista">
+            <div class="vista-vacia">
+                <h3>Estadísticas de Citas</h3>
+                <p>Esta sección está actualmente en construcción. Aquí aparecerán las gráficas próximamente.</p>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Lógica en JavaScript explicada en lenguaje simple -->
+    <script>
+        /**
+         * Función que controla el cambio de pestañas en la interfaz.
+         * Oculta todas las vistas y muestra unicamente la que el usuario seleccionó.
+         * @param {string} idPestaña - ID del elemento HTML que se va a mostrar
+         * @param {HTMLButtonElement} botonClicado - Botón del menú que se presionó
+         */
+        function cambiarPestaña(idPestaña, botonClicado) {
+            // 1. Ocultar todas las secciones "vista"
+            const todasLasVistas = document.querySelectorAll('.vista');
+            todasLasVistas.forEach(vista => {
+                vista.classList.remove('activa');
+            });
+
+            // 2. Mostrar la sección seleccionada
+            const vistaAMostrar = document.getElementById(idPestaña);
+            if(vistaAMostrar) {
+                vistaAMostrar.classList.add('activa');
+            }
+
+            // 3. Quitar la clase "activo" de todos los botones del menú (para cambiar los colores)
+            const todosLosBotones = document.querySelectorAll('.btn-menu:not(.btn-cerrar-sesion)');
+            todosLosBotones.forEach(boton => {
+                boton.classList.remove('activo');
+            });
+
+            // 4. Activar visualmente solo el botón en el que se hizo clic
+            if(botonClicado) {
+                botonClicado.classList.add('activo');
+            }
+        }
+
+        /**
+         * Función que simula el inicio de sesión falso. 
+         * Solo recarga o limpia algo. 
+         */
+        function cerrarSesion(){
+            alert("Cerrando sesión (simulado)...");
+            // Aquí iría la redirección a una hipotética página de inicio (ej: window.location.href = 'index.html';)
+        }
+
+        /**
+         * Realiza una solicitud (petición HTTP) al servidor backend en Java (ej. servlets/controlador).
+         * Usamos datos de mentira en caso de de que no haya conexión para que se pueda ver cómo quedará la tabla final.
+         */
+        async function cargarDatosDeCitas() {
+            // Definimos dónde está supuestamente nuestro backend que entrega las citas.
+            // Para conectar con la clase de Java CitaDao.java, este servidor de base debería estar funcionando.
+            const urlDelServidorJava = '/api/citas'; 
+            
+            // Este es el espacio HTML donde vamos a introducir la información
+            const cuerpoTabla = document.getElementById('cuerpo-tabla-citas');
+
+            try {
+                // Aquí el navegador intentará pedirle la información al Java
+                /* 
+                 const respuesta = await fetch(urlDelServidorJava);
+                 const listadoCitas = await respuesta.json();
+                */
+                
+                // --- COMO NO TENEMOS SERVIDOR AUN, SIMULAREMOS QUE JAVA NOS RESPONDE ESTO ---
+                // Estos datos imitan una respuesta de CitaDao.obtenerCitasPorUsuario en la base de datos
+                const listadoCitas = [
+                    { id: 1, fecha: "10/04/2026", hora: "08:00 AM", tipo: "Salud", lugar: "Clínica Central", descripcion: "Revisión general", estado: "pendiente" },
+                    { id: 2, fecha: "12/04/2026", hora: "02:30 PM", tipo: "Mecánica", lugar: "Taller Hermanos", descripcion: "Cambio de aceite", estado: "completada" },
+                    { id: 3, fecha: "15/04/2026", hora: "11:00 AM", tipo: "Tramite", lugar: "Notaría 5ta", descripcion: "Firma de documentos", estado: "cancelada" }
+                ];
+
+                // Limpiamos los datos de prueba iniciales
+                cuerpoTabla.innerHTML = '';
+
+                // Recorremos la lista de citas (sean reales o simuladas) para agregarlas a la tabla
+                listadoCitas.forEach(cita => {
+                    // Creamos una nueva fila de tabla (<tr>)
+                    const fila = document.createElement('tr');
+                    
+                    // Asignar el color adecuado para el estado de la cita usando minúsculas para coincidir exactamente
+                    const estadoEnMinuscula = cita.estado.toLowerCase();
+                    let claseEstadoCSS = "";
+                    
+                    if (estadoEnMinuscula === "pendiente") claseEstadoCSS = "pendiente";
+                    else if (estadoEnMinuscula === "completada") claseEstadoCSS = "completada";
+                    else if (estadoEnMinuscula === "cancelada") claseEstadoCSS = "cancelada";
+
+                    // Formatear la primera letra del estado a mayúscula para la interfaz
+                    const estadoTexto = cita.estado.charAt(0).toUpperCase() + cita.estado.slice(1);
+
+                    // Insertar contenido de las columnas (<td>)
+                    fila.innerHTML = `
+                        <td><strong>${cita.fecha}</strong> <br> <span style="font-size:12px; color:var(--texto-gris)">${cita.hora}</span></td>
+                        <td>${cita.tipo}</td>
+                        <td>${cita.lugar}</td>
+                        <td>${cita.descripcion}</td>
+                        <td><span class="estado ${claseEstadoCSS}">${estadoTexto}</span></td>
+                    `;
+
+                    // Finalmente, agregar la fila ya lista a la tabla principal
+                    cuerpoTabla.appendChild(fila);
+                });
+
+            } catch (error) {
+                // Si la conexión falla, se mostrará un error en rojo
+                console.error("No se pudo contactar el servidor Java: ", error);
+                cuerpoTabla.innerHTML = '<tr><td colspan="5" style="text-align:center; color:red;">Hubo un error cargando las citas. Verifica la base de datos y la conexión a Java.</td></tr>';
+            }
+        }
+
+        // Una vez que la página carga, llamamos a la función para cargar las citas automáticamente
+        document.addEventListener('DOMContentLoaded', () => {
+            cargarDatosDeCitas();
+        });
+
+    </script>
+</body>
+</html>
