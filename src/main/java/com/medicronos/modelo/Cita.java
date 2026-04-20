@@ -14,14 +14,22 @@ public class Cita {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
 
-    @Column(name = "usuario_id")
+    @Column(name = "usuario_id", nullable = false)
     private int usuarioId;
 
+    @Column(nullable = false)
     private String tipo;
-    private String fecha;
-    private String hora;
+
+    @Column(nullable = false)
+    private String fecha;   // Formato: "yyyy-MM-dd"
+
+    @Column(nullable = false)
+    private String hora;    // Formato: "HH:mm"
+
     private String lugar;
     private String descripcion;
+
+    @Column(nullable = false)
     private String estado;
 
     // Constructor vacío requerido por JPA
