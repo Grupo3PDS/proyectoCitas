@@ -284,8 +284,8 @@
                     <thead>
                         <tr>
                             <th>Fecha y Hora</th>
-                            <th>Tipo de Cita</th>
-                            <th>Lugar</th>
+                            <th>Especialidad Médica</th>
+                            <th>Consultorio / Úbicación</th>
                             <th>Descripción</th>
                             <th>Estado</th>
                         </tr>
@@ -363,21 +363,18 @@
 
             try {
                 // Aquí el navegador intentará pedirle la información al Java
-                /* 
-                 const respuesta = await fetch(urlDelServidorJava);
-                 const listadoCitas = await respuesta.json();
-                */
+                // Realizamos la petición real al backend de Spring Boot (controlador)
+                const respuesta = await fetch(urlDelServidorJava);
+                const listadoCitas = await respuesta.json();
                 
-                // --- COMO NO TENEMOS SERVIDOR AUN, SIMULAREMOS QUE JAVA NOS RESPONDE ESTO ---
-                // Estos datos imitan una respuesta de CitaDao.obtenerCitasPorUsuario en la base de datos
-                const listadoCitas = [
-                    { id: 1, fecha: "10/04/2026", hora: "08:00 AM", tipo: "Salud", lugar: "Clínica Central", descripcion: "Revisión general", estado: "pendiente" },
-                    { id: 2, fecha: "12/04/2026", hora: "02:30 PM", tipo: "Mecánica", lugar: "Taller Hermanos", descripcion: "Cambio de aceite", estado: "completada" },
-                    { id: 3, fecha: "15/04/2026", hora: "11:00 AM", tipo: "Tramite", lugar: "Notaría 5ta", descripcion: "Firma de documentos", estado: "cancelada" }
-                ];
-
-                // Limpiamos los datos de prueba iniciales
+                // Limpiamos los datos de la tabla
                 cuerpoTabla.innerHTML = '';
+
+                // Si no hay citas programadas aún en la base de datos
+                if (listadoCitas.length === 0) {
+                     cuerpoTabla.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:30px; color:var(--texto-gris);">Aún no tienes citas médicas programadas.</td></tr>';
+                     return;
+                }
 
                 // Recorremos la lista de citas (sean reales o simuladas) para agregarlas a la tabla
                 listadoCitas.forEach(cita => {
@@ -409,9 +406,9 @@
                 });
 
             } catch (error) {
-                // Si la conexión falla, se mostrará un error en rojo
+                // Si la conexión falla (ej. servidor apagado), mostraremos el mensaje de que no hay citas en lugar de un error.
                 console.error("No se pudo contactar el servidor Java: ", error);
-                cuerpoTabla.innerHTML = '<tr><td colspan="5" style="text-align:center; color:red;">Hubo un error cargando las citas. Verifica la base de datos y la conexión a Java.</td></tr>';
+                cuerpoTabla.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:30px; color:var(--texto-gris);">Aún no tienes citas médicas programadas.</td></tr>';
             }
         }
 
