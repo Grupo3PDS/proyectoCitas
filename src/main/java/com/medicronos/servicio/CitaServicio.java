@@ -42,7 +42,11 @@ public class CitaServicio {
         }
         
         // Llamamos a la base de datos para registrarla
-        return citaDao.registrarCita(nuevaCita);
+        boolean resultado = citaDao.registrarCita(nuevaCita);
+        if (!resultado) {
+            System.out.println("Error al guardar la nueva cita en la base de datos.");
+        }
+        return resultado;
     }
 
     /**

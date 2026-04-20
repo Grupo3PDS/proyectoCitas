@@ -1,13 +1,22 @@
 package com.medicronos.modelo;
 
+import jakarta.persistence.*;
+
 /**
  * Clase que representa una cita en el sistema Medicronos.
  * Contiene todos los atributos de una cita personal.
  */
+@Entity
+@Table(name = "citas")
 public class Cita {
 
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
+
+    @Column(name = "usuario_id")
     private int usuarioId;
+
     private String tipo;
     private String fecha;
     private String hora;
@@ -15,7 +24,7 @@ public class Cita {
     private String descripcion;
     private String estado;
 
-    // Constructor vacío requerido por algunos frameworks
+    // Constructor vacío requerido por JPA
     public Cita() {}
 
     /**
