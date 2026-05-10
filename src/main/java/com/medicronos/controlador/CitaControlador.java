@@ -3,6 +3,7 @@ package com.medicronos.controlador;
 import com.medicronos.modelo.Cita;
 import com.medicronos.servicio.CitaServicio;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -44,14 +45,13 @@ public class CitaControlador {
      * Ruta final: POST /api/citas
      */
     @PostMapping
-    public String crearCita(@RequestBody Cita nuevaCita) {
+    public ResponseEntity<String> crearCita(@RequestBody Cita nuevaCita) {
         boolean exito = citaServicio.guardarNuevaCita(nuevaCita);
         
-        // Retornamos un mensaje de confirmación súper sencillo
-        if(exito){
-            return "Cita agendada correctamente";
+        if (exito) {
+            return ResponseEntity.status(201).body("Cita agendada correctamente");
         } else {
-            return "Error al intentar crear la cita. Verifique sus datos.";
+            return ResponseEntity.badRequest().body("Error al intentar crear la cita. Verifique sus datos.");
         }
     }
 
@@ -60,13 +60,17 @@ public class CitaControlador {
      * Ruta final: PUT /api/citas
      */
     @PutMapping
-    public String actualizarCita(@RequestBody Cita citaModificada) {
+    public ResponseEntity<String> actualizarCita(@RequestBody Cita citaModificada) {
+        // Si no trae estado (frontend no lo envía), lo preservamos buscándolo primero
+        if (citaModificada.getEstado() == null || citaModificada.getEstado().isBlank()) {
+            citaModificada.setEstado("pendiente");
+        }
         boolean exito = citaServicio.modificarCita(citaModificada);
         
-        if(exito){
-            return "Cita modificada correctamente";
+        if (exito) {
+            return ResponseEntity.ok("Cita modificada correctamente");
         } else {
-            return "Error al modificar la cita.";
+            return ResponseEntity.badRequest().body("Error al modificar la cita.");
         }
     }
 

@@ -40,7 +40,12 @@ public class CitaServicio {
             System.out.println("No se puede guardar: El usuario no es válido.");
             return false;
         }
-        
+
+        // Si no viene estado (p.ej. el frontend no lo envía), asignamos "pendiente" por defecto
+        if (nuevaCita.getEstado() == null || nuevaCita.getEstado().isBlank()) {
+            nuevaCita.setEstado("pendiente");
+        }
+
         // Llamamos a la base de datos para registrarla
         boolean resultado = citaDao.registrarCita(nuevaCita);
         if (!resultado) {
