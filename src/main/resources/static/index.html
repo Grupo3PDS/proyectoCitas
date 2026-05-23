@@ -329,9 +329,263 @@
             background-color: #b71c1c;
         }
 
+        /* --- Pantalla de Autenticación Premium --- */
+        .pantalla-auth {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: linear-gradient(135deg, var(--azul-oscuro) 0%, #002244 50%, var(--verde-jade) 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .pantalla-auth.oculto {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+            transform: scale(1.05);
+        }
+
+        .auth-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 20px;
+            padding: 40px;
+            width: 90%;
+            max-width: 440px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25);
+            animation: authEntrada 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @keyframes authEntrada {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .auth-titulo {
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--azul-oscuro);
+            text-align: center;
+            margin-bottom: 8px;
+            letter-spacing: 0.5px;
+        }
+
+        .auth-titulo span {
+            color: var(--verde-jade);
+        }
+
+        .auth-subtitulo {
+            font-size: 14px;
+            color: var(--texto-gris);
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .form-grupo-auth {
+            margin-bottom: 20px;
+        }
+
+        .form-grupo-auth label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--azul-oscuro);
+        }
+
+        .form-grupo-auth input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1.5px solid var(--borde-suave);
+            border-radius: 10px;
+            font-size: 15px;
+            transition: all 0.3s ease;
+            background-color: #fafafa;
+        }
+
+        .form-grupo-auth input:focus {
+            outline: none;
+            border-color: var(--verde-jade);
+            background-color: var(--blanco);
+            box-shadow: 0 0 0 3px rgba(0, 168, 107, 0.15);
+        }
+
+        .auth-opciones {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+
+        .toggle-ver-contrasena {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            color: var(--texto-gris);
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .toggle-ver-contrasena input {
+            cursor: pointer;
+            accent-color: var(--verde-jade);
+            width: 16px;
+            height: 16px;
+        }
+
+        .btn-auth {
+            width: 100%;
+            background-color: var(--azul-oscuro);
+            color: var(--blanco);
+            border: none;
+            padding: 14px;
+            font-size: 16px;
+            font-weight: 600;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(0, 51, 102, 0.2);
+            margin-bottom: 20px;
+        }
+
+        .btn-auth:hover {
+            background-color: #002244;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(0, 51, 102, 0.3);
+        }
+
+        .btn-auth:active {
+            transform: translateY(0);
+        }
+
+        .auth-cambio {
+            text-align: center;
+            font-size: 14px;
+            color: var(--texto-gris);
+        }
+
+        .auth-cambio a {
+            color: var(--verde-jade);
+            text-decoration: none;
+            font-weight: 600;
+            transition: color 0.2s ease;
+        }
+
+        .auth-cambio a:hover {
+            color: #008f5a;
+            text-decoration: underline;
+        }
+
+        .mensaje-alerta {
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 500;
+            margin-bottom: 20px;
+            line-height: 1.4;
+            animation: vibrar 0.3s ease;
+        }
+
+        .mensaje-alerta.error {
+            background-color: #fce8e6;
+            color: #c5221f;
+            border-left: 4px solid #d93025;
+        }
+
+        .mensaje-alerta.exito {
+            background-color: #e6f4ea;
+            color: #137333;
+            border-left: 4px solid #1e8e3e;
+        }
+
+        @keyframes vibrar {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-6px); }
+            40%, 80% { transform: translateX(6px); }
+        }
+
     </style>
 </head>
 <body>
+
+    <!-- Pantalla de Autenticación Premium -->
+    <div class="pantalla-auth" id="pantalla-auth">
+        <div class="auth-card">
+            <!-- Formulario Iniciar Sesión -->
+            <div id="seccion-login">
+                <h2 class="auth-titulo">Medi<span>cronos</span></h2>
+                <p class="auth-subtitulo">Inicie sesión en su cuenta de citas médicas</p>
+                
+                <div id="login-error" class="mensaje-alerta error" style="display: none;"></div>
+                
+                <form id="form-login" onsubmit="realizarLogin(event)">
+                    <div class="form-grupo-auth">
+                        <label for="login-correo">Correo electrónico</label>
+                        <input type="email" id="login-correo" placeholder="ejemplo@correo.com" required>
+                    </div>
+                    <div class="form-grupo-auth">
+                        <label for="login-contrasena">Contraseña</label>
+                        <input type="password" id="login-contrasena" placeholder="••••••••" required>
+                    </div>
+                    <div class="auth-opciones">
+                        <label class="toggle-ver-contrasena">
+                            <input type="checkbox" onchange="toggleContrasena('login-contrasena')"> <span>Mostrar contraseña</span>
+                        </label>
+                    </div>
+                    <button type="submit" class="btn-auth">Iniciar sesión</button>
+                </form>
+                <div class="auth-cambio">
+                    ¿No tiene una cuenta? <a href="#" onclick="mostrarSeccion('registro')">Registrarse</a>
+                </div>
+            </div>
+
+            <!-- Formulario Registrarse (Otro microservicio en interfaz) -->
+            <div id="seccion-registro" style="display: none;">
+                <h2 class="auth-titulo">Crear Cuenta</h2>
+                <p class="auth-subtitulo">Regístrese en el sistema de citas de Medicronos</p>
+                
+                <div id="registro-error" class="mensaje-alerta error" style="display: none;"></div>
+                <div id="registro-exito" class="mensaje-alerta exito" style="display: none;"></div>
+
+                <form id="form-registro" onsubmit="realizarRegistro(event)">
+                    <div class="form-grupo-auth">
+                        <label for="reg-nombre">Nombre completo</label>
+                        <input type="text" id="reg-nombre" placeholder="Santiago Correa" required>
+                    </div>
+                    <div class="form-grupo-auth">
+                        <label for="reg-correo">Correo electrónico</label>
+                        <input type="email" id="reg-correo" placeholder="santiago@correo.com" required>
+                    </div>
+                    <div class="form-grupo-auth">
+                        <label for="reg-contrasena">Contraseña</label>
+                        <input type="password" id="reg-contrasena" class="pwd-registro" placeholder="••••••••" required>
+                    </div>
+                    <div class="form-grupo-auth">
+                        <label for="reg-contrasena-confirmar">Confirmar contraseña</label>
+                        <input type="password" id="reg-contrasena-confirmar" class="pwd-registro" placeholder="••••••••" required>
+                    </div>
+                    <div class="auth-opciones">
+                        <label class="toggle-ver-contrasena">
+                            <input type="checkbox" onchange="toggleContrasena('pwd-registro')"> <span>Mostrar contraseñas</span>
+                        </label>
+                    </div>
+                    <button type="submit" class="btn-auth">Registrarse</button>
+                </form>
+                <div class="auth-cambio">
+                    ¿Ya tiene una cuenta? <a href="#" onclick="mostrarSeccion('login')">Iniciar sesión</a>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- Barra lateral de navegación -->
     <aside class="barra-lateral">
@@ -463,47 +717,40 @@
         }
 
         /**
-         * Función que simula el inicio de sesión falso. 
-         * Solo recarga o limpia algo. 
+         * Función que cierra la sesión del usuario.
+         * Limpia localStorage, muestra la pantalla de inicio de sesión y limpia los datos.
          */
-        function cerrarSesion(){
-            alert("Cerrando sesión (simulado)...");
-            // Aquí iría la redirección a una hipotética página de inicio (ej: window.location.href = 'index.html';)
+        function cerrarSesion() {
+            localStorage.clear();
+            document.getElementById('pantalla-auth').classList.remove('oculto');
+            document.getElementById('cuerpo-tabla-citas').innerHTML = '';
+            mostrarSeccion('login');
         }
 
         /**
-         * Realiza una solicitud (petición HTTP) al servidor backend en Java (ej. servlets/controlador).
-         * Usamos datos de mentira en caso de de que no haya conexión para que se pueda ver cómo quedará la tabla final.
+         * Realiza una solicitud (petición HTTP) al servidor backend en Java para obtener
+         * las citas específicas del usuario logueado actualmente.
          */
         async function cargarDatosDeCitas() {
-            // Definimos dónde está supuestamente nuestro backend que entrega las citas.
-            // Para conectar con la clase de Java CitaDao.java, este servidor de base debería estar funcionando.
-            const urlDelServidorJava = '/api/citas'; 
-            
-            // Este es el espacio HTML donde vamos a introducir la información
+            const usuarioId = localStorage.getItem('usuarioId');
+            if (!usuarioId) return;
+
+            const urlDelServidorJava = `/api/citas/usuario/${usuarioId}`; 
             const cuerpoTabla = document.getElementById('cuerpo-tabla-citas');
 
             try {
-                // Aquí el navegador intentará pedirle la información al Java
-                // Realizamos la petición real al backend de Spring Boot (controlador)
                 const respuesta = await fetch(urlDelServidorJava);
                 const listadoCitas = await respuesta.json();
                 
-                // Limpiamos los datos de la tabla
                 cuerpoTabla.innerHTML = '';
 
-                // Si no hay citas programadas aún en la base de datos
                 if (listadoCitas.length === 0) {
                      cuerpoTabla.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:30px; color:var(--texto-gris);">Aún no tienes citas médicas programadas.</td></tr>';
                      return;
                 }
 
-                // Recorremos la lista de citas (sean reales o simuladas) para agregarlas a la tabla
                 listadoCitas.forEach(cita => {
-                    // Creamos una nueva fila de tabla (<tr>)
                     const fila = document.createElement('tr');
-                    
-                    // Asignar el color adecuado para el estado de la cita usando minúsculas para coincidir exactamente
                     const estadoEnMinuscula = cita.estado.toLowerCase();
                     let claseEstadoCSS = "";
                     
@@ -511,10 +758,8 @@
                     else if (estadoEnMinuscula === "completada") claseEstadoCSS = "completada";
                     else if (estadoEnMinuscula === "cancelada") claseEstadoCSS = "cancelada";
 
-                    // Formatear la primera letra del estado a mayúscula para la interfaz
                     const estadoTexto = cita.estado.charAt(0).toUpperCase() + cita.estado.slice(1);
 
-                    // Insertar contenido de las columnas (<td>)
                     fila.innerHTML = `
                         <td><strong>${cita.fecha}</strong> <br> <span style="font-size:12px; color:var(--texto-gris)">${cita.hora}</span></td>
                         <td>${cita.tipo}</td>
@@ -527,24 +772,195 @@
                         </td>
                     `;
 
-                    // Finalmente, agregar la fila ya lista a la tabla principal
                     cuerpoTabla.appendChild(fila);
                 });
 
             } catch (error) {
-                // Si la conexión falla (ej. servidor apagado), mostraremos el mensaje de que no hay citas en lugar de un error.
                 console.error("No se pudo contactar el servidor Java: ", error);
                 cuerpoTabla.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:30px; color:var(--texto-gris);">Aún no tienes citas médicas programadas.</td></tr>';
             }
         }
 
-        // Una vez que la página carga, llamamos a la función para cargar las citas automáticamente
+        // Una vez que la página carga, inicializamos el estado de autenticación
         document.addEventListener('DOMContentLoaded', () => {
-            cargarDatosDeCitas();
+            const usuarioId = localStorage.getItem('usuarioId');
+            if (usuarioId) {
+                document.getElementById('pantalla-auth').classList.add('oculto');
+                mostrarNombreUsuario();
+                cargarDatosDeCitas();
+            } else {
+                document.getElementById('pantalla-auth').classList.remove('oculto');
+            }
             
             // Event listener para el formulario
             document.getElementById('form-cita').addEventListener('submit', guardarCita);
         });
+
+        /**
+         * Muestra el nombre personalizado del usuario logueado en el encabezado.
+         */
+        function mostrarNombreUsuario() {
+            const nombre = localStorage.getItem('usuarioNombre') || 'Usuario';
+            document.querySelector('.encabezado h1').textContent = `Bienvenido, ${nombre}`;
+        }
+
+        /**
+         * Alterna la visibilidad de los caracteres en el campo de contraseña.
+         */
+        function toggleContrasena(selector) {
+            let inputs;
+            if (selector === 'pwd-registro') {
+                inputs = document.querySelectorAll('.pwd-registro');
+            } else {
+                inputs = [document.getElementById(selector)];
+            }
+            
+            inputs.forEach(input => {
+                if (input) {
+                    input.type = input.type === 'password' ? 'text' : 'password';
+                }
+            });
+        }
+
+        /**
+         * Cambia la vista activa del microservicio/interfaz de autenticación.
+         */
+        function mostrarSeccion(seccion) {
+            const loginSec = document.getElementById('seccion-login');
+            const registroSec = document.getElementById('seccion-registro');
+            
+            // Ocultar mensajes previos de error/exito
+            document.getElementById('login-error').style.display = 'none';
+            document.getElementById('registro-error').style.display = 'none';
+            document.getElementById('registro-exito').style.display = 'none';
+            
+            document.getElementById('form-login').reset();
+            document.getElementById('form-registro').reset();
+            
+            // Asegurar que las contraseñas vuelvan a estar ocultas (tipo password)
+            document.getElementById('login-contrasena').type = 'password';
+            document.querySelectorAll('.pwd-registro').forEach(input => input.type = 'password');
+            document.querySelectorAll('.toggle-ver-contrasena input').forEach(cb => cb.checked = false);
+
+            if (seccion === 'login') {
+                loginSec.style.display = 'block';
+                registroSec.style.display = 'none';
+            } else {
+                loginSec.style.display = 'none';
+                registroSec.style.display = 'block';
+            }
+        }
+
+        /**
+         * Procesa el inicio de sesión enviando la petición al backend en Java.
+         */
+        async function realizarLogin(event) {
+            event.preventDefault();
+            const errorDiv = document.getElementById('login-error');
+            errorDiv.style.display = 'none';
+
+            const datos = {
+                correo: document.getElementById('login-correo').value.trim(),
+                contrasena: document.getElementById('login-contrasena').value
+            };
+
+            try {
+                const response = await fetch('/api/usuarios/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(datos)
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    // Inicio de sesión exitoso
+                    localStorage.setItem('usuarioId', result.id);
+                    localStorage.setItem('usuarioNombre', result.nombre);
+                    
+                    // Transición premium para desactivar el panel de autenticación
+                    document.getElementById('pantalla-auth').classList.add('oculto');
+                    mostrarNombreUsuario();
+                    cargarDatosDeCitas();
+                } else {
+                    // Mostrar error específico retornado por el backend
+                    errorDiv.textContent = result.error || 'Credenciales inválidas';
+                    errorDiv.style.display = 'block';
+                    // Pequeña vibración en caso de error
+                    errorDiv.style.animation = 'none';
+                    setTimeout(() => errorDiv.style.animation = 'vibrar 0.3s ease', 10);
+                }
+            } catch (error) {
+                console.error('Error en Login:', error);
+                errorDiv.textContent = 'Error al conectar con el servidor';
+                errorDiv.style.display = 'block';
+            }
+        }
+
+        /**
+         * Procesa el registro de un nuevo usuario enviando la petición al backend.
+         */
+        async function realizarRegistro(event) {
+            event.preventDefault();
+            const errorDiv = document.getElementById('registro-error');
+            const exitoDiv = document.getElementById('registro-exito');
+            errorDiv.style.display = 'none';
+            exitoDiv.style.display = 'none';
+
+            const contrasena = document.getElementById('reg-contrasena').value;
+            const confirmarContrasena = document.getElementById('reg-contrasena-confirmar').value;
+
+            // 1. Verificar primero que las contraseñas coincidan localmente
+            if (contrasena !== confirmarContrasena) {
+                errorDiv.textContent = 'no coinciden';
+                errorDiv.style.display = 'block';
+                errorDiv.style.animation = 'none';
+                setTimeout(() => errorDiv.style.animation = 'vibrar 0.3s ease', 10);
+                return;
+            }
+
+            const datos = {
+                nombre: document.getElementById('reg-nombre').value.trim(),
+                correo: document.getElementById('reg-correo').value.trim(),
+                contrasena: contrasena,
+                confirmarContrasena: confirmarContrasena
+            };
+
+            try {
+                const response = await fetch('/api/usuarios/registrar', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(datos)
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    // Registro exitoso. Se autologuea y pasa al dashboard
+                    exitoDiv.textContent = '¡Usuario registrado correctamente!';
+                    exitoDiv.style.display = 'block';
+                    
+                    setTimeout(() => {
+                        localStorage.setItem('usuarioId', result.id);
+                        localStorage.setItem('usuarioNombre', result.nombre);
+                        
+                        document.getElementById('pantalla-auth').classList.add('oculto');
+                        mostrarNombreUsuario();
+                        cargarDatosDeCitas();
+                    }, 800);
+                } else {
+                    // Mostrar error del backend (ej: "Correo ya asociado")
+                    errorDiv.textContent = result.error || 'Error al registrar el usuario';
+                    errorDiv.style.display = 'block';
+                    errorDiv.style.animation = 'none';
+                    setTimeout(() => errorDiv.style.animation = 'vibrar 0.3s ease', 10);
+                }
+            } catch (error) {
+                console.error('Error en Registro:', error);
+                errorDiv.textContent = 'Error al conectar con el servidor';
+                errorDiv.style.display = 'block';
+            }
+        }
 
         /**
          * Muestra el modal para crear una nueva cita
@@ -584,8 +1000,9 @@
             event.preventDefault();
             
             const id = document.getElementById('cita-id').value;
+            const usuarioId = parseInt(localStorage.getItem('usuarioId')) || 1;
             const cita = {
-                usuarioId: 1, // Simulado, en producción vendría de la sesión
+                usuarioId: usuarioId,
                 tipo: document.getElementById('tipo').value,
                 fecha: document.getElementById('fecha').value,
                 hora: document.getElementById('hora').value,

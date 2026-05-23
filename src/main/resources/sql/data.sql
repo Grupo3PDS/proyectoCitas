@@ -18,3 +18,6 @@ VALUES (2, 1, 'estudio', '2026-04-28', '14:00:00', 'Biblioteca Javeriana', 'Ases
 MERGE INTO citas (id, usuario_id, tipo, fecha, hora, lugar, descripcion, estado)
 KEY(id)
 VALUES (3, 1, 'tramites', '2026-04-20', '09:00:00', 'Notaria 5', 'Renovar documentos', 'completada');
+
+-- Sincronizar el generador de secuencia de H2 con los datos iniciales
+ALTER TABLE citas ALTER COLUMN id RESTART WITH 4;
