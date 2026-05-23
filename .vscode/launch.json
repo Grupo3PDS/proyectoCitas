@@ -1,0 +1,14 @@
+{
+    "configurations": [
+        {
+            "type": "java",
+            "name": "Spring Boot-MedicronosApplication<medicronos>",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "mainClass": "com.medicronos.MedicronosApplication",
+            "projectName": "medicronos",
+            "args": "",
+            "envFile": "${workspaceFolder}/.env"
+        }
+    ]
+}
