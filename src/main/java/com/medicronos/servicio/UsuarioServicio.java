@@ -21,19 +21,13 @@ public class UsuarioServicio {
 
     /**
      * Valida las credenciales de inicio de sesión de un usuario.
-     * Cumple con ACID (lectura de consistencia transaccional).
-     * 
-     * @param correo Correo electrónico del usuario
-     * @param contrasena Contraseña del usuario
-     * @return El objeto Usuario si la autenticación es exitosa
-     * @throws Exception Excepción detallada de negocio ("el correo no esta registrado" o "Contraseña incorrecta")
      */
     @Transactional(readOnly = true)
     public Usuario login(String correo, String contrasena) throws Exception {
         if (correo == null || correo.isBlank()) {
             throw new Exception("El correo es requerido");
         }
-        
+
         Optional<Usuario> optUsuario = usuarioDao.obtenerPorCorreo(correo.trim());
         if (optUsuario.isEmpty()) {
             throw new Exception("el correo no esta registrado");
@@ -49,14 +43,7 @@ public class UsuarioServicio {
 
     /**
      * Registra un nuevo usuario en la base de datos de manera transaccional.
-     * Usa Isolation.SERIALIZABLE para garantizar atomicidad y aislamiento consistentes (ACID)
-     * e impedir colisiones concurrentes al generar el ID (+1 del anterior).
-     * 
-     * @param nombre Nombre del usuario
-     * @param correo Correo electrónico del usuario
-     * @param contrasena Contraseña del usuario
-     * @return El usuario registrado
-     * @throws Exception Excepción si el correo ya está asociado o hay fallos
+     * Usa Isolation.SERIALIZABLE para garantizar atomicidad y aislamiento consistentes (ACID).
      */
     @Transactional(isolation = Isolation.SERIALIZABLE, rollbackFor = Exception.class)
     public Usuario registrar(String nombre, String correo, String contrasena) throws Exception {
@@ -72,7 +59,7 @@ public class UsuarioServicio {
             throw new Exception("Correo ya asociado");
         }
 
-        // 2. Obtener el ID máximo y sumar +1 (Transaccionalidad serializada evita carreras de condiciones)
+        // 2. Obtener el ID máximo y sumar +1
         int nuevoId = usuarioDao.obtenerMaxId() + 1;
 
         // 3. Crear el nuevo usuario
@@ -85,5 +72,43 @@ public class UsuarioServicio {
         }
 
         return nuevoUsuario;
+    }
+
+    /**
+     * Obtiene un usuario por su ID.
+     */
+    public Optional<Usuario> obtenerPorId(int id) {
+        return usuarioDao.obtenerPorId(id);
+    }
+
+    /**
+     * Cambia la contraseña de un usuario existente.
+     * Verifica que la contraseña actual sea correcta antes de actualizarla.
+     */
+    @Transactional(isolation = Isolation.SERIALIZABLE, rollbackFor = Exception.class)
+    public void cambiarContrasena(int usuarioId, String contrasenaActual, String nuevaContrasena) throws Exception {
+        if (nuevaContrasena == null || nuevaContrasena.isBlank()) {
+            throw new Exception("La nueva contraseña no puede estar vacía");
+        }
+
+        // 1. Obtener usuario
+        Optional<Usuario> optUsuario = usuarioDao.obtenerPorId(usuarioId);
+        if (optUsuario.isEmpty()) {
+            throw new Exception("Usuario no encontrado");
+        }
+
+        Usuario usuario = optUsuario.get();
+
+        // 2. Verificar contraseña actual
+        if (!usuario.getContrasena().equals(contrasenaActual)) {
+            throw new Exception("La contraseña actual es incorrecta");
+        }
+
+        // 3. Actualizar y guardar
+        usuario.setContrasena(nuevaContrasena);
+        boolean guardado = usuarioDao.guardarUsuario(usuario);
+        if (!guardado) {
+            throw new Exception("No se pudo guardar la nueva contraseña");
+        }
     }
 }

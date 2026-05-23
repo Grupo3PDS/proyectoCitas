@@ -30,7 +30,6 @@ public class UsuarioControlador {
 
         try {
             Usuario usuario = usuarioServicio.login(correo, contrasena);
-            // Retornamos el objeto usuario (sin la contraseña por seguridad en una app real, pero aquí lo devolvemos completo)
             return ResponseEntity.ok(usuario);
         } catch (Exception e) {
             String mensaje = e.getMessage();
@@ -55,7 +54,6 @@ public class UsuarioControlador {
         String contrasena = datos.get("contrasena");
         String confirmarContrasena = datos.get("confirmarContrasena");
 
-        // 1. Validar que las contraseñas coincidan
         if (contrasena == null || !contrasena.equals(confirmarContrasena)) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", "no coinciden"));
         }
@@ -70,6 +68,34 @@ public class UsuarioControlador {
             } else {
                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("error", mensaje));
             }
+        }
+    }
+
+    /**
+     * Obtiene los datos de perfil de un usuario por su ID.
+     * GET /api/usuarios/{id}
+     */
+    @GetMapping("/{id}")
+    public ResponseEntity<?> obtenerUsuario(@PathVariable int id) {
+        return usuarioServicio.obtenerPorId(id)
+                .map(usuario -> ResponseEntity.ok((Object) usuario))
+                .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "Usuario no encontrado")));
+    }
+
+    /**
+     * Cambia la contraseña de un usuario.
+     * PUT /api/usuarios/cambiar-contrasena
+     */
+    @PutMapping("/cambiar-contrasena")
+    public ResponseEntity<?> cambiarContrasena(@RequestBody Map<String, String> payload) {
+        try {
+            int usuarioId = Integer.parseInt(payload.getOrDefault("usuarioId", "0"));
+            String actual = payload.get("contrasenaActual");
+            String nueva = payload.get("nuevaContrasena");
+            usuarioServicio.cambiarContrasena(usuarioId, actual, nueva);
+            return ResponseEntity.ok(Map.of("mensaje", "Contraseña actualizada correctamente"));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", e.getMessage()));
         }
     }
 }
