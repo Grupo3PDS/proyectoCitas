@@ -118,6 +118,46 @@
             color: var(--blanco);
         }
 
+        .btn-secundario {
+            background-color: transparent;
+            color: var(--texto-gris);
+            border: 1px solid var(--borde-suave);
+            padding: 10px 15px;
+            font-size: 14px;
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-secundario:hover {
+            background-color: var(--fondo-gris);
+            color: var(--texto-negro);
+        }
+
+        .btn-peligro {
+            background-color: #d93025;
+            color: var(--blanco);
+            border: none;
+            padding: 10px 15px;
+            font-size: 14px;
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-peligro:hover {
+            background-color: #c5221f;
+        }
+
+        .modal-acciones {
+            display: flex;
+            justify-content: flex-end;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
         .btn-cerrar-sesion {
             margin-top: auto;
             color: #d32f2f;
@@ -513,9 +553,57 @@
             40%, 80% { transform: translateX(6px); }
         }
 
+        /* --- Notificaciones Toast --- */
+        .contenedor-notificaciones {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            z-index: 1000;
+        }
+
+        .toast {
+            background-color: var(--blanco);
+            border-left: 4px solid var(--verde-jade);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            padding: 15px 20px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            min-width: 250px;
+            transform: translateX(120%);
+            opacity: 0;
+            transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+
+        .toast.mostrar {
+            transform: translateX(0);
+            opacity: 1;
+        }
+
+        .toast.error {
+            border-left-color: #d93025;
+        }
+
+        .toast-icono {
+            font-size: 20px;
+        }
+
+        .toast-contenido {
+            color: var(--texto-negro);
+            font-size: 14px;
+            font-weight: 500;
+        }
+
     </style>
 </head>
 <body>
+
+    <!-- Contenedor para Notificaciones Toast -->
+    <div id="contenedor-notificaciones" class="contenedor-notificaciones"></div>
 
     <!-- Pantalla de Autenticación Premium -->
     <div class="pantalla-auth" id="pantalla-auth">
@@ -600,6 +688,7 @@
         <nav class="menu-navegacion">
             <button class="btn-menu activo" onclick="cambiarPestaña('pestaña-citas', this)">Mis Citas</button>
             <button class="btn-menu" onclick="cambiarPestaña('pestaña-estadisticas', this)">Estadísticas</button>
+            <button class="btn-menu" onclick="cambiarPestaña('pestaña-perfil', this); cargarPerfil();">Perfil</button>
         </nav>
 
         <button class="btn-menu btn-cerrar-sesion" onclick="cerrarSesion()">Cerrar sesión</button>
@@ -644,7 +733,35 @@
             </div>
         </section>
 
-    </main>
+            <!-- Pestaña de perfil -->
+        <section id="pestaña-perfil" class="vista">
+            <h2 style="margin-bottom: 20px; color: var(--azul-oscuro);">Perfil de Usuario</h2>
+
+            <div class="form-group">
+                <label>Correo electrónico</label>
+                <p id="perfil-correo"></p>
+            </div>
+            <div class="form-group">
+                <label>Fecha de creación</label>
+                <p id="perfil-fecha"></p>
+            </div>
+            <h3 style="margin-top:30px;">Cambiar Contraseña</h3>
+            <div class="form-group">
+                <label for='perfil-contrasena-actual'>Contraseña actual</label>
+                <input type="password" id="perfil-contrasena-actual" required />
+            </div>
+            <div class="form-group">
+                <label for='perfil-nueva-contrasena'>Nueva contraseña</label>
+                <input type="password" id="perfil-nueva-contrasena" required />
+            </div>
+            <div class="form-group">
+                <label for='perfil-confirmar-contrasena'>Confirmar nueva contraseña</label>
+                <input type="password" id="perfil-confirmar-contrasena" required />
+            </div>
+            <button class="btn-primario" onclick="enviarCambioContrasena()">Actualizar Contraseña</button>
+            <div id="perfil-mensaje" class="mensaje-alerta" style="display:none;"></div>
+        </section>
+</main>
 
     <!-- Modal para Crear/Editar Cita -->
     <div id="modal-cita" class="modal" style="display: none;">
@@ -680,6 +797,18 @@
                 </div>
                 <button type="submit" class="btn-primario">Guardar Cita</button>
             </form>
+        </div>
+    </div>
+
+    <!-- Modal para Confirmación (ej. Eliminar Cita) -->
+    <div id="modal-confirmacion" class="modal" style="display: none;">
+        <div class="modal-content" style="max-width: 400px; text-align: center;">
+            <h2 id="modal-confirmacion-titulo" style="color: var(--azul-oscuro); margin-bottom: 15px;">Confirmar Acción</h2>
+            <p id="modal-confirmacion-mensaje" style="margin-bottom: 25px; color: var(--texto-gris);"></p>
+            <div class="modal-acciones" style="justify-content: center;">
+                <button class="btn-secundario" onclick="cerrarModalConfirmacion()">Cancelar</button>
+                <button id="btn-confirmar-accion" class="btn-peligro">Eliminar</button>
+            </div>
         </div>
     </div>
 
@@ -973,10 +1102,68 @@
         }
 
         /**
+         * Muestra una notificación tipo Toast
+         * @param {string} mensaje - El texto a mostrar
+         * @param {string} tipo - 'exito' o 'error'
+         */
+        function mostrarNotificacion(mensaje, tipo = 'exito') {
+            const contenedor = document.getElementById('contenedor-notificaciones');
+            const toast = document.createElement('div');
+            toast.className = `toast ${tipo}`;
+            
+            const icono = tipo === 'exito' ? '✅' : '❌';
+            
+            toast.innerHTML = `
+                <span class="toast-icono">${icono}</span>
+                <span class="toast-contenido">${mensaje}</span>
+            `;
+            
+            contenedor.appendChild(toast);
+            
+            // Forzar reflow para que la transición de entrada funcione
+            toast.offsetHeight;
+            
+            toast.classList.add('mostrar');
+            
+            setTimeout(() => {
+                toast.classList.remove('mostrar');
+                setTimeout(() => {
+                    toast.remove();
+                }, 300); // Esperar a que termine la transición para remover del DOM
+            }, 3000);
+        }
+
+        /**
          * Cierra el modal
          */
         function cerrarModal() {
             document.getElementById('modal-cita').style.display = 'none';
+        }
+
+        /**
+         * Muestra el modal de confirmación
+         */
+        function mostrarModalConfirmacion(mensaje, onConfirmar) {
+            document.getElementById('modal-confirmacion-mensaje').textContent = mensaje;
+            const btnConfirmar = document.getElementById('btn-confirmar-accion');
+            
+            // Remover event listeners anteriores clonando el botón
+            const nuevoBtn = btnConfirmar.cloneNode(true);
+            btnConfirmar.parentNode.replaceChild(nuevoBtn, btnConfirmar);
+            
+            nuevoBtn.addEventListener('click', () => {
+                cerrarModalConfirmacion();
+                onConfirmar();
+            });
+            
+            document.getElementById('modal-confirmacion').style.display = 'block';
+        }
+
+        /**
+         * Cierra el modal de confirmación
+         */
+        function cerrarModalConfirmacion() {
+            document.getElementById('modal-confirmacion').style.display = 'none';
         }
 
         /**
@@ -1028,7 +1215,7 @@
                 });
                 
                 const result = await response.text();
-                alert(result);
+                mostrarNotificacion(result, response.ok ? 'exito' : 'error');
                 
                 if (response.ok) {
                     cerrarModal();
@@ -1036,35 +1223,106 @@
                 }
             } catch (error) {
                 console.error('Error:', error);
-                alert('Error al guardar la cita');
+                mostrarNotificacion('Error al guardar la cita', 'error');
             }
         }
 
         /**
          * Elimina una cita
          */
-        async function eliminarCita(id) {
-            if (!confirm('¿Está seguro de que desea eliminar esta cita?')) {
+        function eliminarCita(id) {
+            mostrarModalConfirmacion('¿Está seguro de que desea eliminar esta cita?', async () => {
+                try {
+                    const response = await fetch(`/api/citas/borrar/${id}`, {
+                        method: 'DELETE'
+                    });
+                    
+                    const result = await response.text();
+                    mostrarNotificacion(result, response.ok ? 'exito' : 'error');
+                    
+                    if (response.ok) {
+                        cargarDatosDeCitas(); // Recargar la tabla
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    mostrarNotificacion('Error al eliminar la cita', 'error');
+                }
+            });
+        }
+        /**
+         * Carga la información del perfil del usuario y la muestra en la pestaña.
+         */
+        async function cargarPerfil() {
+            const usuarioId = localStorage.getItem('usuarioId');
+            if (!usuarioId) {
+                console.warn('Usuario no logueado');
                 return;
             }
-            
             try {
-                const response = await fetch(`/api/citas/borrar/${id}`, {
-                    method: 'DELETE'
-                });
-                
-                const result = await response.text();
-                alert(result);
-                
-                if (response.ok) {
-                    cargarDatosDeCitas(); // Recargar la tabla
-                }
-            } catch (error) {
-                console.error('Error:', error);
-                alert('Error al eliminar la cita');
+                const response = await fetch(`/api/usuarios/${usuarioId}`);
+                if (!response.ok) throw new Error('Error al obtener datos del usuario');
+                const usuario = await response.json();
+
+                document.getElementById('perfil-correo').textContent = usuario.correo || '';
+                const fecha = usuario.fechaCreacion ? new Date(usuario.fechaCreacion).toLocaleDateString() : '';
+                document.getElementById('perfil-fecha').textContent = fecha;
+            } catch (err) {
+                console.error(err);
             }
         }
 
+        /**
+         * Envía al backend la solicitud de cambio de contraseña.
+         */
+        async function enviarCambioContrasena() {
+            const usuarioId = localStorage.getItem('usuarioId');
+            const actual = document.getElementById('perfil-contrasena-actual').value;
+            const nueva = document.getElementById('perfil-nueva-contrasena').value;
+            const confirmar = document.getElementById('perfil-confirmar-contrasena').value;
+
+            const mensajeDiv = document.getElementById('perfil-mensaje');
+            mensajeDiv.style.display = 'none';
+
+            if (!actual || !nueva || !confirmar) {
+                mensajeDiv.textContent = 'Todos los campos son obligatorios';
+                mensajeDiv.style.display = 'block';
+                return;
+            }
+            if (nueva !== confirmar) {
+                mensajeDiv.textContent = 'Las contraseñas no coinciden';
+                mensajeDiv.style.display = 'block';
+                return;
+            }
+
+            try {
+                const payload = {
+                    usuarioId: parseInt(usuarioId),
+                    contrasenaActual: actual,
+                    nuevaContrasena: nueva
+                };
+                const response = await fetch('/api/usuarios/cambiar-contrasena', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const result = await response.json();
+
+                if (response.ok) {
+                    mensajeDiv.textContent = result.mensaje || 'Contraseña actualizada';
+                    mensajeDiv.style.display = 'block';
+                    document.getElementById('perfil-contrasena-actual').value = '';
+                    document.getElementById('perfil-nueva-contrasena').value = '';
+                    document.getElementById('perfil-confirmar-contrasena').value = '';
+                } else {
+                    mensajeDiv.textContent = result.error || 'Error al cambiar contraseña';
+                    mensajeDiv.style.display = 'block';
+                }
+            } catch (err) {
+                console.error(err);
+                mensajeDiv.textContent = 'Error de red al cambiar contraseña';
+                mensajeDiv.style.display = 'block';
+            }
+        }
     </script>
 </body>
 </html>

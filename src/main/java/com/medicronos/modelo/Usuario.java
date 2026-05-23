@@ -1,6 +1,7 @@
 package com.medicronos.modelo;
 
 import jakarta.persistence.*;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -10,42 +11,43 @@ import java.util.List;
 @Entity
 @Table(name = "usuarios")
 public class Usuario {
-    
+
     @Id
     private int id;
-    
+
     @Column(nullable = false)
     private String nombre;
-    
+
     @Column(name = "email", nullable = false, unique = true)
     private String correo;
-    
+
     @Column(nullable = false)
     private String contrasena;
-    
+
+    @Column(name = "fecha_creacion")
+    private LocalDate fechaCreacion;
+
     // Lista de todas las citas del usuario
     @Transient
     private List<Cita> listaCitas;
-    
+
     // Lista de todas las categorías personalizadas del usuario
     @Transient
     private List<Categoria> listaCategorias;
 
     // Constructor vacío requerido por JPA
     public Usuario() {
-        // Inicializamos las listas en blanco
         this.listaCitas = new ArrayList<>();
         this.listaCategorias = new ArrayList<>();
     }
 
-    // Constructor
+    // Constructor principal
     public Usuario(int id, String nombre, String correo, String contrasena) {
         this.id = id;
         this.nombre = nombre;
         this.correo = correo;
         this.contrasena = contrasena;
-        
-        // Inicializamos las listas en blanco
+        this.fechaCreacion = LocalDate.now();
         this.listaCitas = new ArrayList<>();
         this.listaCategorias = new ArrayList<>();
     }
@@ -59,7 +61,7 @@ public class Usuario {
     public void eliminarCita(Cita citaAEliminar) {
         listaCitas.remove(citaAEliminar);
     }
-    
+
     public void agregarCategoria(Categoria nuevaCategoria) {
         listaCategorias.add(nuevaCategoria);
     }
@@ -68,17 +70,19 @@ public class Usuario {
 
     public int getId() { return id; }
     public void setId(int id) { this.id = id; }
-    
+
     public String getNombre() { return nombre; }
     public void setNombre(String nombre) { this.nombre = nombre; }
-    
+
     public String getCorreo() { return correo; }
     public void setCorreo(String correo) { this.correo = correo; }
-    
+
     public String getContrasena() { return contrasena; }
     public void setContrasena(String contrasena) { this.contrasena = contrasena; }
-    
+
+    public LocalDate getFechaCreacion() { return fechaCreacion; }
+    public void setFechaCreacion(LocalDate fechaCreacion) { this.fechaCreacion = fechaCreacion; }
+
     public List<Cita> getListaCitas() { return listaCitas; }
-    
     public List<Categoria> getListaCategorias() { return listaCategorias; }
 }
