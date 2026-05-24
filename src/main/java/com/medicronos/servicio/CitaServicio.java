@@ -79,6 +79,16 @@ public class CitaServicio {
     }
 
     /**
+     * Cambia el estado de asistencia de una cita.
+     * @param citaId ID de la cita.
+     * @param estado nuevo estado ("asistida", "no asistida").
+     * @return estado de la operación.
+     */
+    public boolean cambiarEstadoAsistencia(int citaId, String estado) {
+        return citaDao.cambiarEstadoCita(citaId, estado);
+    }
+
+    /**
      * Elimina definitivamente una cita del sistema.
      * @param citaId ID de cita.
      * @return estado de la operación.

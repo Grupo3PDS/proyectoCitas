@@ -697,14 +697,21 @@
     <!-- Contenedor del área de trabajo -->
     <main class="contenido-principal">
         
-        <div class="encabezado">
-            <h1>Bienvenido a su cuenta</h1>
+        <div class="encabezado" style="position: relative;">
+            <div id="reloj-bogota" style="position: absolute; top: 20px; right: 40px; font-size: 14px; font-weight: 600; color: var(--azul-oscuro); background: var(--blanco); padding: 8px 16px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); display: flex; align-items: center; gap: 8px;">
+                <span style="font-size: 18px;">⏱️</span> <span id="reloj-texto">Cargando hora...</span>
+            </div>
+            <h1 id="texto-bienvenida">Bienvenido a su cuenta</h1>
             <p>Revise el estado de sus citas y acceda a las gráficas</p>
         </div>
 
         <!-- Pestaña de citas (Listado de información) -->
         <section id="pestaña-citas" class="vista activa">
             <h2 style="margin-bottom: 20px; color: var(--azul-oscuro);">Citas Disponibles</h2>
+            
+            <div id="alerta-24h" class="mensaje-alerta" style="display: none; background-color: #fff3cd; color: #856404; border-left: 4px solid #ffeeba;">
+                <strong>⚠️ Atención:</strong> Tienes citas pendientes programadas para las próximas 24 horas.
+            </div>
             
             <div class="tabla-contenedor">
                 <table>
@@ -878,16 +885,56 @@
                      return;
                 }
 
+                let hayCitasEnProximas24h = false;
+                const ahora = new Date();
+
+                // 1. Procesamos y verificamos expiración antes de renderizar
+                for (let cita of listadoCitas) {
+                    const citaTime = new Date(`${cita.fecha}T${cita.hora}:00-05:00`); // Hora de Bogotá
+                    const diffMs = citaTime - ahora;
+                    const diffHoras = diffMs / (1000 * 60 * 60);
+                    const estadoEnMinuscula = cita.estado.toLowerCase();
+                    
+                    // Si ya pasaron más de 24 horas desde la hora de la cita y sigue pendiente
+                    if (estadoEnMinuscula === "pendiente" && diffHoras < -24) {
+                        try {
+                            // Se manda a expirar en backend pero actualizamos local para la tabla
+                            await fetch(`/api/citas/no-asistida/${cita.id}`, { method: 'PATCH' });
+                            cita.estado = "no asistida";
+                        } catch (error) {
+                            console.error("Error auto-expirando cita", error);
+                        }
+                    }
+                    
+                    // Verificamos si hay citas en las próximas 24h
+                    if (cita.estado.toLowerCase() === "pendiente" && diffHoras >= 0 && diffHoras <= 24) {
+                        hayCitasEnProximas24h = true;
+                    }
+                }
+
+                const alerta24h = document.getElementById('alerta-24h');
+                if (alerta24h) alerta24h.style.display = hayCitasEnProximas24h ? 'block' : 'none';
+
+                // 2. Renderizamos la tabla
                 listadoCitas.forEach(cita => {
                     const fila = document.createElement('tr');
                     const estadoEnMinuscula = cita.estado.toLowerCase();
                     let claseEstadoCSS = "";
                     
                     if (estadoEnMinuscula === "pendiente") claseEstadoCSS = "pendiente";
-                    else if (estadoEnMinuscula === "completada") claseEstadoCSS = "completada";
-                    else if (estadoEnMinuscula === "cancelada") claseEstadoCSS = "cancelada";
+                    else if (estadoEnMinuscula === "completada" || estadoEnMinuscula === "asistida") claseEstadoCSS = "completada";
+                    else if (estadoEnMinuscula === "cancelada" || estadoEnMinuscula === "no asistida") claseEstadoCSS = "cancelada";
 
                     const estadoTexto = cita.estado.charAt(0).toUpperCase() + cita.estado.slice(1);
+                    
+                    const citaTime = new Date(`${cita.fecha}T${cita.hora}:00-05:00`);
+                    const diffHoras = (citaTime - ahora) / (1000 * 60 * 60);
+                    
+                    let btnAsistidaHTML = "";
+                    // El botón solo aparece si la cita ya pasó y no han pasado 24 horas.
+                    if (estadoEnMinuscula === "pendiente" && diffHoras <= 0 && diffHoras >= -24) {
+                        btnAsistidaHTML = `<button class="btn-accion completada" style="background-color: var(--verde-jade); color: var(--blanco);" onclick="marcarAsistencia(${cita.id})">Asistida</button>`;
+                    }
 
                     fila.innerHTML = `
                         <td><strong>${cita.fecha}</strong> <br> <span style="font-size:12px; color:var(--texto-gris)">${cita.hora}</span></td>
@@ -896,6 +943,7 @@
                         <td>${cita.descripcion}</td>
                         <td><span class="estado ${claseEstadoCSS}">${estadoTexto}</span></td>
                         <td>
+                            ${btnAsistidaHTML}
                             <button class="btn-accion editar" onclick="editarCita(${cita.id}, '${cita.tipo}', '${cita.fecha}', '${cita.hora}', '${cita.lugar}', '${cita.descripcion}')">Editar</button>
                             <button class="btn-accion eliminar" onclick="eliminarCita(${cita.id})">Eliminar</button>
                         </td>
@@ -912,6 +960,9 @@
 
         // Una vez que la página carga, inicializamos el estado de autenticación
         document.addEventListener('DOMContentLoaded', () => {
+            actualizarReloj();
+            setInterval(actualizarReloj, 60000); // Actualizar cada minuto
+
             const usuarioId = localStorage.getItem('usuarioId');
             if (usuarioId) {
                 document.getElementById('pantalla-auth').classList.add('oculto');
@@ -926,11 +977,24 @@
         });
 
         /**
+         * Actualiza el reloj en el DOM cada minuto con la hora de Bogotá.
+         */
+        function actualizarReloj() {
+            const relojEl = document.getElementById('reloj-texto');
+            if (!relojEl) return;
+            
+            const options = { timeZone: 'America/Bogota', year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true };
+            const formatter = new Intl.DateTimeFormat('es-CO', options);
+            relojEl.textContent = formatter.format(new Date());
+        }
+
+        /**
          * Muestra el nombre personalizado del usuario logueado en el encabezado.
          */
         function mostrarNombreUsuario() {
             const nombre = localStorage.getItem('usuarioNombre') || 'Usuario';
-            document.querySelector('.encabezado h1').textContent = `Bienvenido, ${nombre}`;
+            const h1El = document.querySelector('.encabezado h1');
+            if(h1El) h1El.textContent = `Bienvenido, ${nombre}`;
         }
 
         /**
@@ -1249,6 +1313,27 @@
                 }
             });
         }
+        /**
+         * Marca una cita como asistida manualmente
+         */
+        async function marcarAsistencia(id) {
+            try {
+                const response = await fetch(`/api/citas/asistir/${id}`, {
+                    method: 'PATCH'
+                });
+                
+                const result = await response.text();
+                mostrarNotificacion(result, response.ok ? 'exito' : 'error');
+                
+                if (response.ok) {
+                    cargarDatosDeCitas(); // Recargar la tabla
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                mostrarNotificacion('Error al actualizar el estado', 'error');
+            }
+        }
+
         /**
          * Carga la información del perfil del usuario y la muestra en la pestaña.
          */
