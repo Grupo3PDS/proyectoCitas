@@ -79,6 +79,28 @@ public class CitaDao {
     }
 
     /**
+     * Cambia el estado de una cita.
+     * @param citaId ID de la cita
+     * @param nuevoEstado el nuevo estado ("asistida", "no asistida", etc)
+     * @return true si se actualizó correctamente
+     */
+    public boolean cambiarEstadoCita(int citaId, String nuevoEstado) {
+        try {
+            Cita cita = citaRepository.findById(citaId).orElse(null);
+            if (cita != null) {
+                cita.setEstado(nuevoEstado);
+                citaRepository.save(cita);
+                return true;
+            }
+            return false;
+        } catch (Exception e) {
+            System.err.println("Error al cambiar estado de cita: " + e.getMessage());
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    /**
      * Elimina una cita de la base de datos.
      * @param citaId ID de la cita a eliminar
      * @return true si se eliminó correctamente

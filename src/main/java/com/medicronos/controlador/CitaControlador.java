@@ -90,6 +90,36 @@ public class CitaControlador {
     }
 
     /**
+     * Endpoint para marcar una cita como asistida.
+     * Ruta final: PATCH /api/citas/asistir/5
+     */
+    @PatchMapping("/asistir/{idCita}")
+    public ResponseEntity<String> asistir(@PathVariable int idCita) {
+        boolean exito = citaServicio.cambiarEstadoAsistencia(idCita, "asistida");
+        
+        if(exito) {
+            return ResponseEntity.ok("Cita marcada como asistida");
+        } else {
+            return ResponseEntity.badRequest().body("No se pudo actualizar la asistencia");
+        }
+    }
+
+    /**
+     * Endpoint para marcar una cita como no asistida automáticamente.
+     * Ruta final: PATCH /api/citas/no-asistida/5
+     */
+    @PatchMapping("/no-asistida/{idCita}")
+    public ResponseEntity<String> noAsistida(@PathVariable int idCita) {
+        boolean exito = citaServicio.cambiarEstadoAsistencia(idCita, "no asistida");
+        
+        if(exito) {
+            return ResponseEntity.ok("Cita expirada y marcada como no asistida");
+        } else {
+            return ResponseEntity.badRequest().body("No se pudo actualizar el estado");
+        }
+    }
+
+    /**
      * Endpoint para borrar permanentemente una cita.
      * Ruta final: DELETE /api/citas/borrar/5
      */
