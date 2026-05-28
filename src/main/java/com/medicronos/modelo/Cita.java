@@ -4,7 +4,6 @@ import jakarta.persistence.*;
 
 /**
  * Clase que representa una cita en el sistema Medicronos.
- * Contiene todos los atributos de una cita personal.
  */
 @Entity
 @Table(name = "citas")
@@ -14,6 +13,9 @@ public class Cita {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
 
+    @Column(unique = true, nullable = false, length = 10)
+    private String codigo;
+
     @Column(name = "usuario_id", nullable = false)
     private int usuarioId;
 
@@ -21,10 +23,10 @@ public class Cita {
     private String tipo;
 
     @Column(nullable = false)
-    private String fecha;   // Formato: "yyyy-MM-dd"
+    private String fecha;
 
     @Column(nullable = false)
-    private String hora;    // Formato: "HH:mm"
+    private String hora;
 
     private String lugar;
     private String descripcion;
@@ -35,12 +37,10 @@ public class Cita {
     // Constructor vacío requerido por JPA
     public Cita() {}
 
-    /**
-     * Constructor con todos los atributos
-     */
-    public Cita(int id, int usuarioId, String tipo, String fecha,
+    public Cita(int id, String codigo, int usuarioId, String tipo, String fecha,
                 String hora, String lugar, String descripcion, String estado) {
         this.id = id;
+        this.codigo = codigo;
         this.usuarioId = usuarioId;
         this.tipo = tipo;
         this.fecha = fecha;
@@ -50,9 +50,6 @@ public class Cita {
         this.estado = estado;
     }
 
-    /**
-     * Constructor sin id (para crear nuevas citas)
-     */
     public Cita(int usuarioId, String tipo, String fecha,
                 String hora, String lugar, String descripcion) {
         this.usuarioId = usuarioId;
@@ -67,6 +64,9 @@ public class Cita {
     // Getters y Setters
     public int getId() { return id; }
     public void setId(int id) { this.id = id; }
+
+    public String getCodigo() { return codigo; }
+    public void setCodigo(String codigo) { this.codigo = codigo; }
 
     public int getUsuarioId() { return usuarioId; }
     public void setUsuarioId(int usuarioId) { this.usuarioId = usuarioId; }
@@ -89,12 +89,9 @@ public class Cita {
     public String getEstado() { return estado; }
     public void setEstado(String estado) { this.estado = estado; }
 
-    /**
-     * Representación en texto de la cita
-     */
     @Override
     public String toString() {
-        return "Cita [id=" + id + ", tipo=" + tipo + ", fecha=" + fecha +
-               ", hora=" + hora + ", lugar=" + lugar + ", estado=" + estado + "]";
+        return "Cita [id=" + id + ", codigo=" + codigo + ", tipo=" + tipo +
+               ", fecha=" + fecha + ", hora=" + hora + ", estado=" + estado + "]";
     }
 }

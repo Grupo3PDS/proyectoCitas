@@ -717,9 +717,10 @@
                 <table>
                     <thead>
                         <tr>
+                            <th>Código</th>
                             <th>Fecha y Hora</th>
                             <th>Especialidad Médica</th>
-                            <th>Consultorio / Úbicación</th>
+                            <th>Consultorio / Ubicación</th>
                             <th>Descripción</th>
                             <th>Estado</th>
                             <th>Acciones</th>
@@ -778,21 +779,37 @@
             <form id="form-cita">
                 <input type="hidden" id="cita-id" value="">
                 <div class="form-group">
-                    <label for="tipo">Tipo de Cita:</label>
+                    <label>Código de Cita:</label>
+                    <p id="cita-codigo-display" style="font-weight:600; color:var(--azul-oscuro); padding:8px 0;">Se generará automáticamente</p>
+                </div>
+                <div class="form-group">
+                    <label for="tipo">Especialidad / Tipo de Cita:</label>
                     <select id="tipo" required>
-                        <option value="salud">Salud</option>
-                        <option value="estudio">Estudio</option>
-                        <option value="estetica">Estética</option>
-                        <option value="tramites">Trámites</option>
+                        <option value="">-- Seleccione especialidad --</option>
+                        <option value="Odontología">Odontología</option>
+                        <option value="Optometría">Optometría</option>
+                        <option value="Medicina General">Medicina General</option>
+                        <option value="Pediatría">Pediatría</option>
+                        <option value="Ginecología">Ginecología</option>
+                        <option value="Cardiología">Cardiología</option>
+                        <option value="Dermatología">Dermatología</option>
+                        <option value="Psicología">Psicología</option>
+                        <option value="Exámenes de laboratorio">Exámenes de laboratorio</option>
+                        <option value="Control">Control</option>
+                        <option value="Cirugía">Cirugía</option>
+                        <option value="Urgencias">Urgencias</option>
+                        <option value="Otro">Otro</option>
                     </select>
                 </div>
                 <div class="form-group">
                     <label for="fecha">Fecha:</label>
-                    <input type="date" id="fecha" required>
+                    <input type="date" id="fecha" required onchange="cargarHorariosDisponibles()">
                 </div>
                 <div class="form-group">
-                    <label for="hora">Hora:</label>
-                    <input type="time" id="hora" required>
+                    <label for="hora">Hora disponible:</label>
+                    <select id="hora" required>
+                        <option value="">-- Seleccione una fecha primero --</option>
+                    </select>
                 </div>
                 <div class="form-group">
                     <label for="lugar">Lugar:</label>
@@ -937,6 +954,7 @@
                     }
 
                     fila.innerHTML = `
+                        <td><span style="font-size:11px; font-weight:600; color:var(--azul-oscuro); background:var(--azul-claro); padding:2px 6px; border-radius:4px;">${cita.codigo || ''}</span></td>
                         <td><strong>${cita.fecha}</strong> <br> <span style="font-size:12px; color:var(--texto-gris)">${cita.hora}</span></td>
                         <td>${cita.tipo}</td>
                         <td>${cita.lugar}</td>
@@ -944,7 +962,7 @@
                         <td><span class="estado ${claseEstadoCSS}">${estadoTexto}</span></td>
                         <td>
                             ${btnAsistidaHTML}
-                            <button class="btn-accion editar" onclick="editarCita(${cita.id}, '${cita.tipo}', '${cita.fecha}', '${cita.hora}', '${cita.lugar}', '${cita.descripcion}')">Editar</button>
+                            <button class="btn-accion editar" onclick="editarCita(${cita.id}, '${cita.tipo}', '${cita.fecha}', '${cita.hora}', '${cita.lugar}', '${cita.descripcion}', '${cita.codigo || ""}')">Editar</button>
                             <button class="btn-accion eliminar" onclick="eliminarCita(${cita.id})">Eliminar</button>
                         </td>
                     `;
@@ -1162,6 +1180,8 @@
             document.getElementById('modal-titulo').textContent = 'Programar Nueva Cita';
             document.getElementById('cita-id').value = '';
             document.getElementById('form-cita').reset();
+            document.getElementById('cita-codigo-display').textContent = 'Se generará automáticamente';
+            document.getElementById('hora').innerHTML = '<option value="">-- Seleccione una fecha primero --</option>';
             document.getElementById('modal-cita').style.display = 'block';
         }
 
@@ -1205,6 +1225,59 @@
         }
 
         /**
+         * Carga los horarios disponibles para la fecha seleccionada.
+         * Consulta al backend las horas ocupadas y muestra solo las libres (08:00-20:00 c/15min).
+         */
+        async function cargarHorariosDisponibles() {
+            const fecha = document.getElementById('fecha').value;
+            const selectHora = document.getElementById('hora');
+
+            if (!fecha) {
+                selectHora.innerHTML = '<option value="">-- Seleccione una fecha primero --</option>';
+                return;
+            }
+
+            selectHora.innerHTML = '<option value="">Cargando horarios...</option>';
+
+            try {
+                const response = await fetch(`/api/citas/horarios-disponibles?fecha=${fecha}`);
+                const horasDisponibles = await response.json();
+
+                selectHora.innerHTML = '';
+
+                if (horasDisponibles.length === 0) {
+                    selectHora.innerHTML = '<option value="">No hay horarios disponibles para esta fecha</option>';
+                    return;
+                }
+
+                selectHora.innerHTML = '<option value="">-- Seleccione un horario --</option>';
+                horasDisponibles.forEach(hora => {
+                    const option = document.createElement('option');
+                    option.value = hora;
+                    option.textContent = hora;
+                    selectHora.appendChild(option);
+                });
+
+                // Si estamos editando, preseleccionar la hora actual
+                const horaActual = selectHora.dataset.horaActual;
+                if (horaActual) {
+                    const existe = Array.from(selectHora.options).some(o => o.value === horaActual);
+                    if (!existe) {
+                        const option = document.createElement('option');
+                        option.value = horaActual;
+                        option.textContent = horaActual + ' (hora actual)';
+                        selectHora.insertBefore(option, selectHora.options[1]);
+                    }
+                    selectHora.value = horaActual;
+                }
+
+            } catch (error) {
+                console.error('Error cargando horarios:', error);
+                selectHora.innerHTML = '<option value="">Error al cargar horarios</option>';
+            }
+        }
+
+        /**
          * Muestra el modal de confirmación
          */
         function mostrarModalConfirmacion(mensaje, onConfirmar) {
@@ -1233,15 +1306,19 @@
         /**
          * Llena el modal con datos para editar
          */
-        function editarCita(id, tipo, fecha, hora, lugar, descripcion) {
+        function editarCita(id, tipo, fecha, hora, lugar, descripcion, codigo) {
             document.getElementById('modal-titulo').textContent = 'Editar Cita';
             document.getElementById('cita-id').value = id;
             document.getElementById('tipo').value = tipo;
             document.getElementById('fecha').value = fecha;
-            document.getElementById('hora').value = hora;
+            document.getElementById('cita-codigo-display').textContent = codigo || '';
+            // Guardamos la hora actual para preseleccionarla al cargar horarios
+            document.getElementById('hora').dataset.horaActual = hora;
             document.getElementById('lugar').value = lugar;
             document.getElementById('descripcion').value = descripcion;
             document.getElementById('modal-cita').style.display = 'block';
+            // Cargar horarios disponibles y preseleccionar la hora actual
+            cargarHorariosDisponibles();
         }
 
         /**
@@ -1272,18 +1349,22 @@
             try {
                 const response = await fetch(url, {
                     method: method,
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(cita)
                 });
                 
-                const result = await response.text();
-                mostrarNotificacion(result, response.ok ? 'exito' : 'error');
+                const result = await response.json();
+                const mensaje = result.mensaje || result.error || 'Error desconocido';
+                mostrarNotificacion(mensaje, response.ok ? 'exito' : 'error');
                 
                 if (response.ok) {
                     cerrarModal();
-                    cargarDatosDeCitas(); // Recargar la tabla
+                    cargarDatosDeCitas();
+                } else {
+                    // Si el horario ya no está disponible, recargar horarios
+                    if (response.status === 409) {
+                        cargarHorariosDisponibles();
+                    }
                 }
             } catch (error) {
                 console.error('Error:', error);
