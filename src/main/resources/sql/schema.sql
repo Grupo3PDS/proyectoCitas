@@ -12,13 +12,19 @@ CREATE TABLE usuarios (
 -- Tabla de citas
 CREATE TABLE citas (
     id INT AUTO_INCREMENT PRIMARY KEY,
+    codigo VARCHAR(10) UNIQUE NOT NULL,
     usuario_id INT NOT NULL,
-    tipo VARCHAR(20) NOT NULL CHECK (tipo IN ('salud', 'estudio', 'estetica', 'tramites')),
+    tipo VARCHAR(50) NOT NULL CHECK (tipo IN (
+        'Odontología', 'Optometría', 'Medicina General', 'Pediatría',
+        'Ginecología', 'Cardiología', 'Dermatología', 'Psicología',
+        'Exámenes de laboratorio', 'Control', 'Cirugía', 'Urgencias', 'Otro'
+    )),
     fecha DATE NOT NULL,
     hora TIME NOT NULL,
     lugar VARCHAR(150),
     descripcion TEXT,
-    estado VARCHAR(20) DEFAULT 'pendiente' CHECK (estado IN ('pendiente', 'completada', 'cancelada', 'vencida')),
+    estado VARCHAR(20) DEFAULT 'pendiente' CHECK (estado IN ('pendiente', 'completada', 'cancelada', 'vencida', 'asistida', 'no asistida')),
     fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE
+    FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE,
+    CONSTRAINT uq_fecha_hora UNIQUE (fecha, hora)
 );
