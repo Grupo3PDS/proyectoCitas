@@ -19,17 +19,17 @@ public interface CitaRepository extends JpaRepository<Cita, Integer> {
     void deleteById(int id);
 
     /**
-     * Verifica si ya existe una cita en una fecha y hora específica
-     * sin importar el usuario. Para garantizar horarios únicos globales.
+     * Verifica si ya existe una cita en una fecha, hora y lugar específicos
+     * sin importar el usuario. Para garantizar horarios únicos globales por lugar.
      */
-    boolean existsByFechaAndHora(String fecha, String hora);
+    boolean existsByFechaAndHoraAndLugar(String fecha, String hora, String lugar);
 
     /**
-     * Verifica si existe una cita en esa fecha/hora excluyendo un ID
+     * Verifica si existe una cita en esa fecha/hora/lugar excluyendo un ID
      * (útil al editar para no bloquearse a sí misma).
      */
-    @Query("SELECT COUNT(c) > 0 FROM Cita c WHERE c.fecha = :fecha AND c.hora = :hora AND c.id <> :id")
-    boolean existsByFechaAndHoraAndIdNot(@Param("fecha") String fecha, @Param("hora") String hora, @Param("id") int id);
+    @Query("SELECT COUNT(c) > 0 FROM Cita c WHERE c.fecha = :fecha AND c.hora = :hora AND c.lugar = :lugar AND c.id <> :id")
+    boolean existsByFechaAndHoraAndLugarAndIdNot(@Param("fecha") String fecha, @Param("hora") String hora, @Param("lugar") String lugar, @Param("id") int id);
 
     /**
      * Obtiene todas las horas ocupadas en una fecha específica.
