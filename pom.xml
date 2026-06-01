@@ -41,6 +41,13 @@
             <scope>runtime</scope>
         </dependency>
 
+        <!-- Driver MySQL para producción/Docker -->
+        <dependency>
+            <groupId>com.mysql</groupId>
+            <artifactId>mysql-connector-j</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+
         <!-- Utilidades para Pruebas (Listos para automatización futura) -->
         <dependency>
             <groupId>org.springframework.boot</groupId>

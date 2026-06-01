@@ -57,15 +57,20 @@ public class EstadisticasControlador {
         double porcentaje = moduloEstadisticas.calcularPorcentajeCompletadas(usuario);
         int pendientes = moduloEstadisticas.contarCitasPorEstado(usuario, "pendiente");
         int completadas = moduloEstadisticas.contarCitasPorEstado(usuario, "completada");
-        int canceladas = moduloEstadisticas.contarCitasPorEstado(usuario, "cancelada");
+        int canceladas = moduloEstadisticas.contarCitasPorEstado(usuario, "cancelada") + 
+                         moduloEstadisticas.contarCitasPorEstado(usuario, "no asistida");
         int total = citas.size();
+
+        Map<String, Long> distribucionPorTipo = citas.stream()
+                .collect(java.util.stream.Collectors.groupingBy(Cita::getTipo, java.util.stream.Collectors.counting()));
 
         return Map.of(
             "porcentajeCompletadas", porcentaje,
             "pendientes", pendientes,
             "completadas", completadas,
             "canceladas", canceladas,
-            "total", total
+            "total", total,
+            "distribucionTipo", distribucionPorTipo
         );
     }
 }
