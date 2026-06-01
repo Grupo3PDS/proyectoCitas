@@ -6,6 +6,7 @@
     <title>Medicronos - Citas Médicas</title>
     <!-- Fuente moderna e impecable de Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         /* Variables CSS para facilitar cambios y la paleta de colores pedida. */
         :root {
@@ -285,6 +286,65 @@
             color: var(--azul-oscuro);
         }
 
+        /* --- Barra de Filtros (Mis Citas) --- */
+        .barra-filtros {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 20px;
+            align-items: center;
+        }
+
+        .barra-filtros label {
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--texto-gris);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .filtro-btn {
+            padding: 6px 14px;
+            border-radius: 20px;
+            border: 2px solid var(--borde-suave);
+            background: var(--blanco);
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.18s ease;
+            color: var(--texto-gris);
+        }
+
+        .filtro-btn:hover { border-color: var(--azul-oscuro); color: var(--azul-oscuro); }
+
+        .filtro-btn.activo {
+            background-color: var(--azul-oscuro);
+            border-color: var(--azul-oscuro);
+            color: var(--blanco);
+        }
+
+        .filtro-btn.fp.activo  { background: #f59e0b; border-color: #f59e0b; color: white; } /* pendiente */
+        .filtro-btn.fc.activo  { background: #10b981; border-color: #10b981; color: white; } /* completada */
+        .filtro-btn.fca.activo { background: #f43f5e; border-color: #f43f5e; color: white; } /* cancelada */
+        .filtro-btn.fna.activo { background: #8b5cf6; border-color: #8b5cf6; color: white; } /* no asistida */
+
+        .filtro-separador { width: 1px; height: 24px; background: var(--borde-suave); margin: 0 4px; }
+
+        .filtro-select {
+            padding: 6px 12px;
+            border-radius: 20px;
+            border: 2px solid var(--borde-suave);
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--texto-gris);
+            cursor: pointer;
+            background: var(--blanco);
+            transition: border-color 0.18s;
+            outline: none;
+        }
+
+        .filtro-select:focus { border-color: var(--azul-oscuro); color: var(--texto-negro); }
+
         /* Modal Styles */
         .modal {
             position: fixed;
@@ -367,6 +427,119 @@
 
         .btn-accion.eliminar:hover {
             background-color: #b71c1c;
+        }
+
+        /* --- Gráficas y Estadísticas --- */
+        .graficas-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+        }
+        @media (max-width: 900px) {
+            .graficas-grid { grid-template-columns: 1fr; }
+        }
+        .grafica-card {
+            background: var(--blanco);
+            border: 2px solid var(--borde-suave);
+            border-radius: 14px;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .grafica-card h4 {
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--azul-oscuro);
+            margin-bottom: 6px;
+            text-align: center;
+        }
+        .grafica-card .grafica-subtitulo {
+            font-size: 12px;
+            color: var(--texto-gris);
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .canvas-contenedor {
+            position: relative;
+            width: 220px;
+            height: 220px;
+            margin-bottom: 20px;
+        }
+        .leyenda {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .leyenda-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 12px;
+            border-radius: 8px;
+            background: var(--fondo-gris);
+            font-size: 13px;
+        }
+        .leyenda-color {
+            width: 12px;
+            height: 12px;
+            border-radius: 3px;
+            flex-shrink: 0;
+        }
+        .leyenda-item span.leyenda-label { flex: 1; color: var(--texto-negro); font-weight: 500; }
+        .leyenda-item span.leyenda-valor { font-weight: 700; color: var(--texto-gris); }
+        .leyenda-item span.leyenda-pct { font-size: 12px; color: var(--texto-gris); }
+
+        /* Tarjeta resumen cumplimiento */
+        .resumen-cumplimiento {
+            grid-column: 1 / -1;
+            background: linear-gradient(135deg, var(--azul-oscuro), #0056b3);
+            border-radius: 14px;
+            padding: 28px 32px;
+            display: flex;
+            align-items: center;
+            gap: 24px;
+            color: var(--blanco);
+        }
+        .cumplimiento-numero {
+            font-size: 56px;
+            font-weight: 700;
+            line-height: 1;
+            flex-shrink: 0;
+            color: var(--blanco);
+        }
+        .cumplimiento-texto h4 {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 6px;
+            color: var(--blanco);
+        }
+        .cumplimiento-texto p {
+            font-size: 13px;
+            opacity: 0.8;
+            color: var(--blanco);
+        }
+        .barra-progreso-contenedor { flex: 1; }
+        .barra-progreso-label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            margin-bottom: 6px;
+            opacity: 0.8;
+            color: var(--blanco);
+        }
+        .barra-progreso {
+            height: 10px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 5px;
+            overflow: hidden;
+        }
+        .barra-progreso-fill {
+            height: 100%;
+            background: var(--verde-jade);
+            border-radius: 5px;
+            transition: width 0.8s ease;
         }
 
         /* --- Pantalla de Autenticación Premium --- */
@@ -687,7 +860,7 @@
 
         <nav class="menu-navegacion">
             <button class="btn-menu activo" onclick="cambiarPestaña('pestaña-citas', this)">Mis Citas</button>
-            <button class="btn-menu" onclick="cambiarPestaña('pestaña-estadisticas', this)">Estadísticas</button>
+            <button class="btn-menu" onclick="cambiarPestaña('pestaña-estadisticas', this); cargarEstadisticas();">Estadísticas</button>
             <button class="btn-menu" onclick="cambiarPestaña('pestaña-perfil', this); cargarPerfil();">Perfil</button>
         </nav>
 
@@ -707,12 +880,42 @@
 
         <!-- Pestaña de citas (Listado de información) -->
         <section id="pestaña-citas" class="vista activa">
-            <h2 style="margin-bottom: 20px; color: var(--azul-oscuro);">Citas Disponibles</h2>
-            
-            <div id="alerta-24h" class="mensaje-alerta" style="display: none; background-color: #fff3cd; color: #856404; border-left: 4px solid #ffeeba;">
+            <h2 style="margin-bottom: 16px; color: var(--azul-oscuro);">Mis Citas</h2>
+
+            <div id="alerta-24h" class="mensaje-alerta" style="display: none; background-color: #fff3cd; color: #856404; border-left: 4px solid #ffeeba; margin-bottom: 16px;">
                 <strong>⚠️ Atención:</strong> Tienes citas pendientes programadas para las próximas 24 horas.
             </div>
-            
+
+            <!-- Barra de filtros -->
+            <div class="barra-filtros">
+                <label>Estado:</label>
+                <button class="filtro-btn activo" id="filtro-todos" onclick="setFiltroEstado('todos', this)">Todos</button>
+                <button class="filtro-btn fp" onclick="setFiltroEstado('pendiente', this)">&#11044; Pendiente</button>
+                <button class="filtro-btn fc" onclick="setFiltroEstado('completada', this)">&#11044; Completada</button>
+                <button class="filtro-btn fca" onclick="setFiltroEstado('cancelada', this)">&#11044; Cancelada</button>
+                <button class="filtro-btn fna" onclick="setFiltroEstado('no asistida', this)">&#11044; No asistida</button>
+
+                <div class="filtro-separador"></div>
+
+                <label>Tipo:</label>
+                <select class="filtro-select" id="filtro-tipo" onchange="aplicarFiltros()">
+                    <option value="todos">Todos los tipos</option>
+                    <option value="Odontología">Odontología</option>
+                    <option value="Optometría">Optometría</option>
+                    <option value="Medicina General">Medicina General</option>
+                    <option value="Pediatría">Pediatría</option>
+                    <option value="Ginecología">Ginecología</option>
+                    <option value="Cardiología">Cardiología</option>
+                    <option value="Dermatología">Dermatología</option>
+                    <option value="Psicología">Psicología</option>
+                    <option value="Exámenes de laboratorio">Exámenes de laboratorio</option>
+                    <option value="Control">Control</option>
+                    <option value="Cirugía">Cirugía</option>
+                    <option value="Urgencias">Urgencias</option>
+                    <option value="Otro">Otro</option>
+                </select>
+            </div>
+
             <div class="tabla-contenedor">
                 <table>
                     <thead>
@@ -721,7 +924,6 @@
                             <th>Fecha y Hora</th>
                             <th>Especialidad Médica</th>
                             <th>Consultorio / Ubicación</th>
-                            <th>Descripción</th>
                             <th>Estado</th>
                             <th>Acciones</th>
                         </tr>
@@ -730,14 +932,42 @@
                         <!-- Las filas de la tabla se insertarán aquí dinámicamente mediante JavaScript -->
                     </tbody>
                 </table>
+                <div id="msg-tabla-vacia" style="display:none; text-align:center; padding:30px; color:var(--texto-gris);">No hay citas que coincidan con los filtros seleccionados.</div>
             </div>
         </section>
 
-        <!-- Pestaña de estadísticas (Vacía por ahora) -->
+        <!-- Pestaña de estadísticas -->
         <section id="pestaña-estadisticas" class="vista">
-            <div class="vista-vacia">
-                <h3>Estadísticas de Citas</h3>
-                <p>Esta sección está actualmente en construcción. Aquí aparecerán las gráficas próximamente.</p>
+            <h2 style="margin-bottom: 12px; color: var(--azul-oscuro);">Estadísticas de Citas</h2>
+            <p style="font-size: 14px; color: var(--texto-gris); margin-bottom: 20px;">Visualice el cumplimiento y compare las citas por estado</p>
+
+            <!-- Filtro por mes -->
+            <div class="barra-filtros" style="margin-bottom: 24px;">
+                <label>Mes:</label>
+                <select class="filtro-select" id="filtro-mes-stats" onchange="cargarEstadisticas()">
+                    <option value="">Todos los meses</option>
+                    <option value="1">Enero</option>
+                    <option value="2">Febrero</option>
+                    <option value="3">Marzo</option>
+                    <option value="4">Abril</option>
+                    <option value="5">Mayo</option>
+                    <option value="6">Junio</option>
+                    <option value="7">Julio</option>
+                    <option value="8">Agosto</option>
+                    <option value="9">Septiembre</option>
+                    <option value="10">Octubre</option>
+                    <option value="11">Noviembre</option>
+                    <option value="12">Diciembre</option>
+                </select>
+            </div>
+
+            <div id="stats-vacio" class="vista-vacia" style="display: none;">
+                <h3>No hay datos suficientes</h3>
+                <p>Programa algunas citas médicas para ver tus estadísticas.</p>
+            </div>
+
+            <div class="graficas-grid" id="graficas-grid" style="display: none;">
+                <!-- Aquí se insertarán dinámicamente las tarjetas -->
             </div>
         </section>
 
@@ -812,32 +1042,153 @@
                     </select>
                 </div>
                 <div class="form-group">
-                    <label for="lugar">Lugar:</label>
-                    <input type="text" id="lugar" placeholder="Ej: Clínica Norte" required>
+                    <label for="lugar">Lugar / Consultorio:</label>
+                    <select id="lugar" required>
+                        <option value="">-- Seleccione un lugar --</option>
+                        <option value="Clínica Norte">Clínica Norte</option>
+                        <option value="Clínica Sur">Clínica Sur</option>
+                        <option value="Clínica Este">Clínica Este</option>
+                        <option value="Clínica Oeste">Clínica Oeste</option>
+                    </select>
                 </div>
-                <div class="form-group">
-                    <label for="descripcion">Descripción:</label>
-                    <textarea id="descripcion" placeholder="Descripción de la cita" required></textarea>
                 </div>
                 <button type="submit" class="btn-primario">Guardar Cita</button>
             </form>
         </div>
     </div>
 
-    <!-- Modal para Confirmación (ej. Eliminar Cita) -->
+    <!-- Modal para Confirmación (Cancelar Cita) -->
     <div id="modal-confirmacion" class="modal" style="display: none;">
         <div class="modal-content" style="max-width: 400px; text-align: center;">
             <h2 id="modal-confirmacion-titulo" style="color: var(--azul-oscuro); margin-bottom: 15px;">Confirmar Acción</h2>
             <p id="modal-confirmacion-mensaje" style="margin-bottom: 25px; color: var(--texto-gris);"></p>
             <div class="modal-acciones" style="justify-content: center;">
-                <button class="btn-secundario" onclick="cerrarModalConfirmacion()">Cancelar</button>
-                <button id="btn-confirmar-accion" class="btn-peligro">Eliminar</button>
+                <button class="btn-secundario" onclick="cerrarModalConfirmacion()">Volver</button>
+                <button id="btn-confirmar-accion" class="btn-peligro">Confirmar</button>
             </div>
         </div>
     </div>
 
     <!-- Lógica en JavaScript explicada en lenguaje simple -->
     <script>
+        let myChart = null;
+
+        async function cargarEstadisticas() {
+            const usuarioId = localStorage.getItem('usuarioId');
+            if (!usuarioId) return;
+
+            const mes = document.getElementById('filtro-mes-stats')?.value || '';
+            const url = mes
+                ? `/api/estadisticas/usuario/${usuarioId}?mes=${mes}`
+                : `/api/estadisticas/usuario/${usuarioId}`;
+
+            try {
+                const response = await fetch(url);
+                const stats = await response.json();
+
+                if (!stats || stats.total === 0 || stats.error) {
+                    document.getElementById('stats-vacio').style.display = 'block';
+                    document.getElementById('graficas-grid').style.display = 'none';
+                } else {
+                    document.getElementById('stats-vacio').style.display = 'none';
+                    document.getElementById('graficas-grid').style.display = 'grid';
+                    renderizarGraficoDona(stats);
+                }
+            } catch (error) {
+                console.error('Error al cargar estadísticas', error);
+            }
+        }
+
+        function renderizarGraficoDona(stats) {
+            const grid = document.getElementById('graficas-grid');
+            grid.innerHTML = ''; // Limpiar
+
+            const pct = Math.round(stats.porcentajeCompletadas);
+
+            // ── Tarjeta de cumplimiento ──────────────────────────────────────
+            const cardCumpl = document.createElement('div');
+            cardCumpl.className = 'resumen-cumplimiento';
+            cardCumpl.innerHTML = `
+                <div class="cumplimiento-numero">${pct}%</div>
+                <div class="cumplimiento-texto">
+                    <h4>Tasa de Cumplimiento</h4>
+                    <p>${stats.completadas} citas asistidas de ${stats.completadas + stats.canceladas} citas finalizadas</p>
+                </div>
+                <div class="barra-progreso-contenedor">
+                    <div class="barra-progreso-label">
+                        <span>0%</span><span>100%</span>
+                    </div>
+                    <div class="barra-progreso">
+                        <div class="barra-progreso-fill" style="width:${pct}%"></div>
+                    </div>
+                </div>
+            `;
+            grid.appendChild(cardCumpl);
+
+            // ── Gráfica por estado (Doughnut) ───────────────────────────────────────────
+            const labels = ['Asistida/Completada', 'Cancelada/No asistida', 'Pendiente'];
+            const valores = [stats.completadas, stats.canceladas, stats.pendientes];
+            const colores = ['#10b981', '#f43f5e', '#f59e0b']; // Verde, Rojo, Ámbar (Como en maqueta.html)
+            const total = stats.total;
+
+            const card = document.createElement('div');
+            card.className = 'grafica-card';
+
+            let leyendaHtml = '';
+            labels.forEach((label, i) => {
+                const p = total > 0 ? Math.round((valores[i] / total) * 100) : 0;
+                leyendaHtml += `
+                    <div class="leyenda-item">
+                        <span class="leyenda-color" style="background:${colores[i]}"></span>
+                        <span class="leyenda-label">${label}</span>
+                        <span class="leyenda-valor">${valores[i]}</span>
+                        <span class="leyenda-pct">(${p}%)</span>
+                    </div>`;
+            });
+
+            card.innerHTML = `
+                <h4>Distribución por Estado</h4>
+                <p class="grafica-subtitulo">Comparativa global de citas</p>
+                <div class="canvas-contenedor">
+                    <canvas id="chartDona"></canvas>
+                </div>
+                <div class="leyenda">${leyendaHtml}</div>
+            `;
+            grid.appendChild(card);
+
+            setTimeout(() => {
+                const ctx = document.getElementById('chartDona');
+                if (!ctx) return;
+                if (myChart) myChart.destroy();
+                
+                myChart = new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            data: valores,
+                            backgroundColor: colores,
+                            borderWidth: 3,
+                            borderColor: '#ffffff',
+                            hoverOffset: 8,
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: true,
+                        cutout: '62%',
+                        plugins: {
+                            legend: { display: false }
+                        },
+                        animation: {
+                            animateRotate: true,
+                            duration: 700,
+                        }
+                    }
+                });
+            }, 0);
+        }
+
         /**
          * Función que controla el cambio de pestañas en la interfaz.
          * Oculta todas las vistas y muestra unicamente la que el usuario seleccionó.
@@ -881,50 +1232,144 @@
         }
 
         /**
-         * Realiza una solicitud (petición HTTP) al servidor backend en Java para obtener
-         * las citas específicas del usuario logueado actualmente.
+         * Estado global de los filtros activos.
+         */
+        let filtroEstadoActual = 'todos';
+        let listadoCitasCache = []; // Cache de todas las citas cargadas del servidor
+
+        /**
+         * Cambia el filtro de estado activo y vuelve a renderizar la tabla.
+         */
+        function setFiltroEstado(estado, boton) {
+            filtroEstadoActual = estado;
+            // Actualizar estilos de los botones de filtro
+            document.querySelectorAll('.barra-filtros .filtro-btn').forEach(b => b.classList.remove('activo'));
+            boton.classList.add('activo');
+            aplicarFiltros();
+        }
+
+        /**
+         * Aplica los filtros activos (estado + tipo) sobre el cache de citas
+         * y vuelve a pintar la tabla. También aplica la regla de 48 horas
+         * para citas canceladas/no-asistidas.
+         */
+        function aplicarFiltros() {
+            const filtroTipo = document.getElementById('filtro-tipo')?.value || 'todos';
+            const ahora = new Date();
+            const cuerpoTabla = document.getElementById('cuerpo-tabla-citas');
+            const msgVacio = document.getElementById('msg-tabla-vacia');
+
+            let filasMostradas = 0;
+            cuerpoTabla.innerHTML = '';
+
+            listadoCitasCache.forEach(cita => {
+                const estadoMin = cita.estado.toLowerCase();
+
+                // ── Regla de visibilidad 48 h ────────────────────────────────
+                // Las citas canceladas o no-asistidas solo se muestran si:
+                //  a) El usuario las filtró explícitamente, O
+                //  b) Han pasado menos de 48 h desde que cambiaron a ese estado
+                const esEstadoOculto = (estadoMin === 'cancelada' || estadoMin === 'no asistida');
+                const filtraExplicitamente = (filtroEstadoActual === estadoMin);
+
+                if (esEstadoOculto && !filtraExplicitamente) {
+                    // Calcular cuánto tiempo ha pasado desde el cambio de estado
+                    // Usamos la hora de la cita como referencia (el backend no retorna fechaCambioEstado)
+                    const citaTime = new Date(`${cita.fecha}T${cita.hora}:00-05:00`);
+                    const diffHoras = (ahora - citaTime) / (1000 * 60 * 60);
+                    if (diffHoras > 48) return; // Ocultar si pasaron más de 48h
+                }
+
+                // ── Filtro por estado ────────────────────────────────────────
+                if (filtroEstadoActual !== 'todos' && estadoMin !== filtroEstadoActual) return;
+
+                // ── Filtro por tipo ──────────────────────────────────────────
+                if (filtroTipo !== 'todos' && cita.tipo !== filtroTipo) return;
+
+                // ── Renderizar fila ──────────────────────────────────────────
+                filasMostradas++;
+                const fila = document.createElement('tr');
+
+                let claseEstadoCSS = '';
+                if (estadoMin === 'pendiente') claseEstadoCSS = 'pendiente';
+                else if (estadoMin === 'completada' || estadoMin === 'asistida') claseEstadoCSS = 'completada';
+                else if (estadoMin === 'cancelada' || estadoMin === 'no asistida') claseEstadoCSS = 'cancelada';
+
+                const estadoTexto = cita.estado.charAt(0).toUpperCase() + cita.estado.slice(1);
+
+                const citaTime = new Date(`${cita.fecha}T${cita.hora}:00-05:00`);
+                const diffHoras = (citaTime - ahora) / (1000 * 60 * 60);
+
+                // Botón "Asistida" solo si la cita ya ocurrió y no han pasado 24h
+                let btnAsistidaHTML = '';
+                if (estadoMin === 'pendiente' && diffHoras <= 0 && diffHoras >= -24) {
+                    btnAsistidaHTML = `<button class="btn-accion completada" style="background-color: var(--verde-jade); color: var(--blanco);" onclick="marcarAsistencia(${cita.id})">Asistida</button>`;
+                }
+
+                // Botón "Cancelar" solo si la cita está pendiente
+                let btnCancelarHTML = '';
+                if (estadoMin === 'pendiente') {
+                    btnCancelarHTML = `<button class="btn-accion eliminar" onclick="cancelarCita(${cita.id})">Cancelar</button>`;
+                }
+
+                fila.innerHTML = `
+                    <td><span style="font-size:11px; font-weight:600; color:var(--azul-oscuro); background:#eef2ff; padding:2px 6px; border-radius:4px;">${cita.codigo || ''}</span></td>
+                    <td><strong>${cita.fecha}</strong> <br> <span style="font-size:12px; color:var(--texto-gris)">${cita.hora}</span></td>
+                    <td>${cita.tipo}</td>
+                    <td>${cita.lugar}</td>
+                    <td><span class="estado ${claseEstadoCSS}">${estadoTexto}</span></td>
+                    <td>
+                        ${btnAsistidaHTML}
+                        <button class="btn-accion editar" onclick="editarCita(${cita.id}, '${cita.tipo}', '${cita.fecha}', '${cita.hora}', '${encodeURIComponent(cita.lugar)}', '${cita.codigo || ''}')" >Editar</button>
+                        ${btnCancelarHTML}
+                    </td>
+                `;
+                cuerpoTabla.appendChild(fila);
+            });
+
+            if (msgVacio) msgVacio.style.display = filasMostradas === 0 ? 'block' : 'none';
+        }
+
+        /**
+         * Solicita la lista de citas al servidor, las guarda en cache y renderiza.
          */
         async function cargarDatosDeCitas() {
             const usuarioId = localStorage.getItem('usuarioId');
             if (!usuarioId) return;
 
-            const urlDelServidorJava = `/api/citas/usuario/${usuarioId}`; 
+            const urlDelServidorJava = `/api/citas/usuario/${usuarioId}`;
             const cuerpoTabla = document.getElementById('cuerpo-tabla-citas');
 
             try {
                 const respuesta = await fetch(urlDelServidorJava);
                 const listadoCitas = await respuesta.json();
-                
+
                 cuerpoTabla.innerHTML = '';
 
                 if (listadoCitas.length === 0) {
-                     cuerpoTabla.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:30px; color:var(--texto-gris);">Aún no tienes citas médicas programadas.</td></tr>';
-                     return;
+                    cuerpoTabla.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:30px; color:var(--texto-gris);">Aún no tienes citas médicas programadas.</td></tr>';
+                    return;
                 }
 
                 let hayCitasEnProximas24h = false;
                 const ahora = new Date();
 
-                // 1. Procesamos y verificamos expiración antes de renderizar
+                // Auto-expirar citas pendientes que pasaron hace más de 24h
                 for (let cita of listadoCitas) {
-                    const citaTime = new Date(`${cita.fecha}T${cita.hora}:00-05:00`); // Hora de Bogotá
-                    const diffMs = citaTime - ahora;
-                    const diffHoras = diffMs / (1000 * 60 * 60);
-                    const estadoEnMinuscula = cita.estado.toLowerCase();
-                    
-                    // Si ya pasaron más de 24 horas desde la hora de la cita y sigue pendiente
-                    if (estadoEnMinuscula === "pendiente" && diffHoras < -24) {
+                    const citaTime = new Date(`${cita.fecha}T${cita.hora}:00-05:00`);
+                    const diffHoras = (citaTime - ahora) / (1000 * 60 * 60);
+                    const estadoMin = cita.estado.toLowerCase();
+
+                    if (estadoMin === 'pendiente' && diffHoras < -24) {
                         try {
-                            // Se manda a expirar en backend pero actualizamos local para la tabla
                             await fetch(`/api/citas/no-asistida/${cita.id}`, { method: 'PATCH' });
-                            cita.estado = "no asistida";
-                        } catch (error) {
-                            console.error("Error auto-expirando cita", error);
+                            cita.estado = 'no asistida';
+                        } catch (err) {
+                            console.error('Error auto-expirando cita', err);
                         }
                     }
-                    
-                    // Verificamos si hay citas en las próximas 24h
-                    if (cita.estado.toLowerCase() === "pendiente" && diffHoras >= 0 && diffHoras <= 24) {
+
+                    if (estadoMin === 'pendiente' && diffHoras >= 0 && diffHoras <= 24) {
                         hayCitasEnProximas24h = true;
                     }
                 }
@@ -932,47 +1377,13 @@
                 const alerta24h = document.getElementById('alerta-24h');
                 if (alerta24h) alerta24h.style.display = hayCitasEnProximas24h ? 'block' : 'none';
 
-                // 2. Renderizamos la tabla
-                listadoCitas.forEach(cita => {
-                    const fila = document.createElement('tr');
-                    const estadoEnMinuscula = cita.estado.toLowerCase();
-                    let claseEstadoCSS = "";
-                    
-                    if (estadoEnMinuscula === "pendiente") claseEstadoCSS = "pendiente";
-                    else if (estadoEnMinuscula === "completada" || estadoEnMinuscula === "asistida") claseEstadoCSS = "completada";
-                    else if (estadoEnMinuscula === "cancelada" || estadoEnMinuscula === "no asistida") claseEstadoCSS = "cancelada";
-
-                    const estadoTexto = cita.estado.charAt(0).toUpperCase() + cita.estado.slice(1);
-                    
-                    const citaTime = new Date(`${cita.fecha}T${cita.hora}:00-05:00`);
-                    const diffHoras = (citaTime - ahora) / (1000 * 60 * 60);
-                    
-                    let btnAsistidaHTML = "";
-                    // El botón solo aparece si la cita ya pasó y no han pasado 24 horas.
-                    if (estadoEnMinuscula === "pendiente" && diffHoras <= 0 && diffHoras >= -24) {
-                        btnAsistidaHTML = `<button class="btn-accion completada" style="background-color: var(--verde-jade); color: var(--blanco);" onclick="marcarAsistencia(${cita.id})">Asistida</button>`;
-                    }
-
-                    fila.innerHTML = `
-                        <td><span style="font-size:11px; font-weight:600; color:var(--azul-oscuro); background:var(--azul-claro); padding:2px 6px; border-radius:4px;">${cita.codigo || ''}</span></td>
-                        <td><strong>${cita.fecha}</strong> <br> <span style="font-size:12px; color:var(--texto-gris)">${cita.hora}</span></td>
-                        <td>${cita.tipo}</td>
-                        <td>${cita.lugar}</td>
-                        <td>${cita.descripcion}</td>
-                        <td><span class="estado ${claseEstadoCSS}">${estadoTexto}</span></td>
-                        <td>
-                            ${btnAsistidaHTML}
-                            <button class="btn-accion editar" onclick="editarCita(${cita.id}, '${cita.tipo}', '${cita.fecha}', '${cita.hora}', '${cita.lugar}', '${cita.descripcion}', '${cita.codigo || ""}')">Editar</button>
-                            <button class="btn-accion eliminar" onclick="eliminarCita(${cita.id})">Eliminar</button>
-                        </td>
-                    `;
-
-                    cuerpoTabla.appendChild(fila);
-                });
+                // Guardar en cache y renderizar con filtros activos
+                listadoCitasCache = listadoCitas;
+                aplicarFiltros();
 
             } catch (error) {
-                console.error("No se pudo contactar el servidor Java: ", error);
-                cuerpoTabla.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:30px; color:var(--texto-gris);">Aún no tienes citas médicas programadas.</td></tr>';
+                console.error('No se pudo contactar el servidor Java: ', error);
+                cuerpoTabla.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:30px; color:var(--texto-gris);">Error al conectar con el servidor.</td></tr>';
             }
         }
 
@@ -1306,18 +1717,18 @@
         /**
          * Llena el modal con datos para editar
          */
-        function editarCita(id, tipo, fecha, hora, lugar, descripcion, codigo) {
+        function editarCita(id, tipo, fecha, hora, lugarEncoded, codigo) {
+            const lugar = decodeURIComponent(lugarEncoded);
+
             document.getElementById('modal-titulo').textContent = 'Editar Cita';
             document.getElementById('cita-id').value = id;
             document.getElementById('tipo').value = tipo;
             document.getElementById('fecha').value = fecha;
             document.getElementById('cita-codigo-display').textContent = codigo || '';
-            // Guardamos la hora actual para preseleccionarla al cargar horarios
             document.getElementById('hora').dataset.horaActual = hora;
-            document.getElementById('lugar').value = lugar;
-            document.getElementById('descripcion').value = descripcion;
+            const selectLugar = document.getElementById('lugar');
+            selectLugar.value = lugar;
             document.getElementById('modal-cita').style.display = 'block';
-            // Cargar horarios disponibles y preseleccionar la hora actual
             cargarHorariosDisponibles();
         }
 
@@ -1334,8 +1745,7 @@
                 tipo: document.getElementById('tipo').value,
                 fecha: document.getElementById('fecha').value,
                 hora: document.getElementById('hora').value,
-                lugar: document.getElementById('lugar').value,
-                descripcion: document.getElementById('descripcion').value
+                lugar: document.getElementById('lugar').value
             };
             
             let url = '/api/citas';
@@ -1373,24 +1783,22 @@
         }
 
         /**
-         * Elimina una cita
+         * Cancela una cita pendiente (cambia su estado a 'cancelada')
          */
-        function eliminarCita(id) {
-            mostrarModalConfirmacion('¿Está seguro de que desea eliminar esta cita?', async () => {
+        function cancelarCita(id) {
+            mostrarModalConfirmacion('¿Está seguro de que desea cancelar esta cita?', async () => {
                 try {
-                    const response = await fetch(`/api/citas/borrar/${id}`, {
-                        method: 'DELETE'
+                    const response = await fetch(`/api/citas/cancelar/${id}`, {
+                        method: 'PATCH'
                     });
-                    
                     const result = await response.text();
                     mostrarNotificacion(result, response.ok ? 'exito' : 'error');
-                    
                     if (response.ok) {
-                        cargarDatosDeCitas(); // Recargar la tabla
+                        cargarDatosDeCitas();
                     }
                 } catch (error) {
                     console.error('Error:', error);
-                    mostrarNotificacion('Error al eliminar la cita', 'error');
+                    mostrarNotificacion('Error al cancelar la cita', 'error');
                 }
             });
         }

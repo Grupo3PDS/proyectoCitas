@@ -1,9 +1,16 @@
+package com.medicronos.servicio;
+
+import com.medicronos.modelo.Cita;
+import com.medicronos.modelo.Usuario;
+import org.springframework.stereotype.Service;
+
 import java.util.List;
 
 /**
  * Este módulo se encarga de analizar los datos de las citas y devolver estadísticas.
  * De esta forma separamos la lógica matemática/analítica.
  */
+@Service
 public class ModuloEstadisticas {
 
     /**
@@ -11,11 +18,11 @@ public class ModuloEstadisticas {
      * @param usuario Usuario al que se evaluará
      * @return El porcentaje en número decimal (ejemplo: 75.5 porciento)
      */
-    public static double calcularPorcentajeCompletadas(Usuario usuario) {
+    public double calcularPorcentajeCompletadas(Usuario usuario) {
         List<Cita> citas = usuario.getListaCitas();
         
-        // Para evitar errores matemáticos si el usuario no tiene citas
-        if (citas.isEmpty()) {
+        // Para evitar errores matemáticos si el usuario no tiene citas o la lista es nula
+        if (citas == null || citas.isEmpty()) {
             return 0.0;
         }
 
@@ -23,7 +30,7 @@ public class ModuloEstadisticas {
         
         // Recorremos la lista de citas del usuario
         for (Cita cita : citas) {
-            if (cita.getEstado() == EstadoCita.COMPLETADA) {
+            if ("completada".equalsIgnoreCase(cita.getEstado())) {
                 completadas++;
             }
         }
@@ -33,12 +40,17 @@ public class ModuloEstadisticas {
     }
 
     /**
-     * Cuenta cuántas citas hay en un estado específico (ej. cuántas están VENCIDAS o PENDIENTES).
+     * Cuenta cuántas citas hay en un estado específico (ej. cuántas están 'vencida' o 'pendiente').
      */
-    public static int contarCitasPorEstado(Usuario usuario, EstadoCita estadoBuscado) {
+    public int contarCitasPorEstado(Usuario usuario, String estadoBuscado) {
+        List<Cita> citas = usuario.getListaCitas();
+        if (citas == null || citas.isEmpty()) {
+            return 0;
+        }
+
         int contador = 0;
-        for (Cita cita : usuario.getListaCitas()) {
-            if (cita.getEstado() == estadoBuscado) {
+        for (Cita cita : citas) {
+            if (estadoBuscado.equalsIgnoreCase(cita.getEstado())) {
                 contador++;
             }
         }

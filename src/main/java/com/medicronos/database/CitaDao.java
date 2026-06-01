@@ -39,4 +39,55 @@ public class CitaDao {
         try {
             // CHECK final: verificar que el horario siga disponible justo antes de guardar
             if (citaRepository.existsByFechaAndHora(cita.getFecha(), cita.getHora())) {
-                System.out.println(
+                System.out.println("Error: Horario ocupado");
+                return false;
+            }
+            cita.setCodigo(generarCodigo());
+            citaRepository.save(cita);
+            return true;
+        } catch(Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    @Transactional
+    public boolean modificarCita(Cita cita) {
+        try {
+            citaRepository.save(cita);
+            return true;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    @Transactional
+    public boolean eliminarCita(int id) {
+        try {
+            if (citaRepository.existsById(id)) {
+                citaRepository.deleteById(id);
+                return true;
+            }
+            return false;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    /** Cambia el estado de una cita por su ID */
+    @Transactional
+    public boolean cambiarEstado(int id, String nuevoEstado) {
+        try {
+            return citaRepository.findById(id).map(cita -> {
+                cita.setEstado(nuevoEstado);
+                citaRepository.save(cita);
+                return true;
+            }).orElse(false);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+}

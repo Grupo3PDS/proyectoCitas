@@ -29,7 +29,6 @@ public class Cita {
     private String hora;
 
     private String lugar;
-    private String descripcion;
 
     @Column(nullable = false)
     private String estado;
@@ -38,7 +37,7 @@ public class Cita {
     public Cita() {}
 
     public Cita(int id, String codigo, int usuarioId, String tipo, String fecha,
-                String hora, String lugar, String descripcion, String estado) {
+                String hora, String lugar, String estado) {
         this.id = id;
         this.codigo = codigo;
         this.usuarioId = usuarioId;
@@ -46,18 +45,16 @@ public class Cita {
         this.fecha = fecha;
         this.hora = hora;
         this.lugar = lugar;
-        this.descripcion = descripcion;
         this.estado = estado;
     }
 
     public Cita(int usuarioId, String tipo, String fecha,
-                String hora, String lugar, String descripcion) {
+                String hora, String lugar) {
         this.usuarioId = usuarioId;
         this.tipo = tipo;
         this.fecha = fecha;
         this.hora = hora;
         this.lugar = lugar;
-        this.descripcion = descripcion;
         this.estado = "pendiente";
     }
 
@@ -82,9 +79,6 @@ public class Cita {
 
     public String getLugar() { return lugar; }
     public void setLugar(String lugar) { this.lugar = lugar; }
-
-    public String getDescripcion() { return descripcion; }
-    public void setDescripcion(String descripcion) { this.descripcion = descripcion; }
 
     public String getEstado() { return estado; }
     public void setEstado(String estado) { this.estado = estado; }
