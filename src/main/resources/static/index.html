@@ -1072,6 +1072,7 @@
     <!-- Lógica en JavaScript explicada en lenguaje simple -->
     <script>
         let myChart = null;
+        let myChartTipo = null;
 
         async function cargarEstadisticas() {
             const usuarioId = localStorage.getItem('usuarioId');
@@ -1085,6 +1086,11 @@
             try {
                 const response = await fetch(url);
                 const stats = await response.json();
+
+                if (stats.error === 'Usuario no encontrado') {
+                    cerrarSesion();
+                    return;
+                }
 
                 if (!stats || stats.total === 0 || stats.error) {
                     document.getElementById('stats-vacio').style.display = 'block';
@@ -1156,36 +1162,99 @@
             `;
             grid.appendChild(card);
 
+            // ── Gráfica por Tipo (Doughnut) ───────────────────────────────────────────
+            const distribucionTipo = stats.distribucionTipo || {};
+            const labelsTipo = Object.keys(distribucionTipo);
+            const valoresTipo = Object.values(distribucionTipo);
+            const coloresBase = ['#3b82f6', '#8b5cf6', '#ec4899', '#14b8a6', '#f97316', '#64748b', '#84cc16', '#06b6d4'];
+            const coloresTipo = labelsTipo.map((_, i) => coloresBase[i % coloresBase.length]);
+
+            const cardTipo = document.createElement('div');
+            cardTipo.className = 'grafica-card';
+
+            let leyendaTipoHtml = '';
+            labelsTipo.forEach((label, i) => {
+                const color = coloresTipo[i];
+                const p = total > 0 ? Math.round((valoresTipo[i] / total) * 100) : 0;
+                leyendaTipoHtml += `
+                    <div class="leyenda-item">
+                        <span class="leyenda-color" style="background:${color}"></span>
+                        <span class="leyenda-label">${label}</span>
+                        <span class="leyenda-valor">${valoresTipo[i]}</span>
+                        <span class="leyenda-pct">(${p}%)</span>
+                    </div>`;
+            });
+
+            cardTipo.innerHTML = `
+                <h4>Distribución por Tipo</h4>
+                <p class="grafica-subtitulo">Especialidades solicitadas</p>
+                <div class="canvas-contenedor">
+                    <canvas id="chartTipo"></canvas>
+                </div>
+                <div class="leyenda">${leyendaTipoHtml}</div>
+            `;
+            grid.appendChild(cardTipo);
+
             setTimeout(() => {
                 const ctx = document.getElementById('chartDona');
-                if (!ctx) return;
-                if (myChart) myChart.destroy();
-                
-                myChart = new Chart(ctx, {
-                    type: 'doughnut',
-                    data: {
-                        labels: labels,
-                        datasets: [{
-                            data: valores,
-                            backgroundColor: colores,
-                            borderWidth: 3,
-                            borderColor: '#ffffff',
-                            hoverOffset: 8,
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: true,
-                        cutout: '62%',
-                        plugins: {
-                            legend: { display: false }
+                if (ctx) {
+                    if (myChart) myChart.destroy();
+                    myChart = new Chart(ctx, {
+                        type: 'doughnut',
+                        data: {
+                            labels: labels,
+                            datasets: [{
+                                data: valores,
+                                backgroundColor: colores,
+                                borderWidth: 3,
+                                borderColor: '#ffffff',
+                                hoverOffset: 8,
+                            }]
                         },
-                        animation: {
-                            animateRotate: true,
-                            duration: 700,
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: true,
+                            cutout: '62%',
+                            plugins: {
+                                legend: { display: false }
+                            },
+                            animation: {
+                                animateRotate: true,
+                                duration: 700,
+                            }
                         }
-                    }
-                });
+                    });
+                }
+
+                const ctxTipo = document.getElementById('chartTipo');
+                if (ctxTipo && labelsTipo.length > 0) {
+                    if (myChartTipo) myChartTipo.destroy();
+                    myChartTipo = new Chart(ctxTipo, {
+                        type: 'doughnut',
+                        data: {
+                            labels: labelsTipo,
+                            datasets: [{
+                                data: valoresTipo,
+                                backgroundColor: coloresTipo,
+                                borderWidth: 3,
+                                borderColor: '#ffffff',
+                                hoverOffset: 8,
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: true,
+                            cutout: '62%',
+                            plugins: {
+                                legend: { display: false }
+                            },
+                            animation: {
+                                animateRotate: true,
+                                duration: 700,
+                            }
+                        }
+                    });
+                }
             }, 0);
         }
 
