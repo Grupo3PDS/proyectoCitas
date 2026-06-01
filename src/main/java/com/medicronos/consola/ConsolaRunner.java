@@ -122,9 +122,8 @@ public class ConsolaRunner implements ApplicationListener<ApplicationReadyEvent>
         String fecha = leerCampo(scanner, "Fecha (ej: 2026-05-10)");
         String hora  = leerCampo(scanner, "Hora  (ej: 14:30)");
         String lugar = leerCampo(scanner, "Lugar (ej: Clínica Norte)");
-        String desc  = leerCampo(scanner, "Descripción");
 
-        Cita nueva = new Cita(USUARIO_ID, tipo, fecha, hora, lugar, desc);
+        Cita nueva = new Cita(USUARIO_ID, tipo, fecha, hora, lugar);
 
         boolean exito = citaServicio.guardarNuevaCita(nueva);
         if (exito) {
@@ -151,7 +150,6 @@ public class ConsolaRunner implements ApplicationListener<ApplicationReadyEvent>
         String fecha = leerCampoOpcional(scanner, "Nueva Fecha (ej: 2026-05-10)");
         String hora  = leerCampoOpcional(scanner, "Nueva Hora  (ej: 14:30)");
         String lugar = leerCampoOpcional(scanner, "Nuevo Lugar");
-        String desc  = leerCampoOpcional(scanner, "Nueva Descripción");
 
         // Buscamos la cita actual para mantener los campos que no cambiaron
         List<Cita> todas = citaServicio.obtenerCitasUsuario(USUARIO_ID);
@@ -167,7 +165,6 @@ public class ConsolaRunner implements ApplicationListener<ApplicationReadyEvent>
         if (!fecha.isEmpty()) actual.setFecha(fecha);
         if (!hora.isEmpty())  actual.setHora(hora);
         if (!lugar.isEmpty()) actual.setLugar(lugar);
-        if (!desc.isEmpty())  actual.setDescripcion(desc);
 
         boolean exito = citaServicio.modificarCita(actual);
         if (exito) {
