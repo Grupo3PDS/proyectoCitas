@@ -40,4 +40,33 @@ public class CitaServicio {
         if (nuevaCita.getEstado() == null || nuevaCita.getEstado().isBlank()) {
             nuevaCita.setEstado("pendiente");
         }
-        return citaDao.registrarCita(
+        return citaDao.registrarCita(nuevaCita);
+    }
+    
+    public java.util.List<String> obtenerHorasOcupadas(String fecha) {
+        return citaDao.obtenerCitasPorUsuario(1).stream().filter(c -> c.getFecha().equals(fecha)).map(Cita::getHora).toList();
+    }
+    
+    public boolean modificarCita(Cita cita) {
+        return citaDao.modificarCita(cita);
+    }
+
+    public boolean eliminarCitaDefinitivo(int id) {
+        return citaDao.eliminarCita(id);
+    }
+
+    /** Cancela una cita pendiente cambiando su estado a 'cancelada' */
+    public boolean cancelarCita(int id) {
+        return citaDao.cambiarEstado(id, "cancelada");
+    }
+
+    /** Marca una cita como completada/asistida */
+    public boolean marcarAsistida(int id) {
+        return citaDao.cambiarEstado(id, "completada");
+    }
+
+    /** Marca una cita como no asistida */
+    public boolean marcarNoAsistida(int id) {
+        return citaDao.cambiarEstado(id, "no asistida");
+    }
+}

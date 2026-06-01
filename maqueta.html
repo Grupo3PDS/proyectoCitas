@@ -1,0 +1,1519 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Medicronos - Citas Médicas</title>
+    <meta name="description" content="Gestiona tus citas médicas con Medicronos. Visualiza estadísticas, programa citas y lleva el control de tu historial de atención.">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Chart.js para las gráficas circulares -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        /* ================================================
+           VARIABLES Y RESET GLOBAL
+        ================================================ */
+        :root {
+            --azul-oscuro: #003366;
+            --azul-medio: #0056b3;
+            --verde-jade: #00A86B;
+            --verde-hover: #008f5a;
+            --blanco: #ffffff;
+            --fondo-gris: #f0f4f8;
+            --texto-negro: #111111;
+            --texto-gris: #6b7280;
+            --borde-suave: #e5e7eb;
+            --sombra: rgba(0,0,0,0.06);
+
+            /* Colores de estado — usados en Mis Citas Y en la gráfica */
+            --color-pendiente-bg: #fffbeb;
+            --color-pendiente-txt: #92400e;
+            --color-pendiente-ring: #f59e0b;
+
+            --color-asistida-bg: #ecfdf5;
+            --color-asistida-txt: #065f46;
+            --color-asistida-ring: #10b981;
+
+            --color-cancelada-bg: #fff1f2;
+            --color-cancelada-txt: #9f1239;
+            --color-cancelada-ring: #f43f5e;
+
+            --color-no-asistida-bg: #f5f3ff;
+            --color-no-asistida-txt: #5b21b6;
+            --color-no-asistida-ring: #8b5cf6;
+        }
+
+        *, *::before, *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--fondo-gris);
+            display: flex;
+            min-height: 100vh;
+            color: var(--texto-negro);
+        }
+
+        /* ================================================
+           BARRA LATERAL
+        ================================================ */
+        .barra-lateral {
+            width: 260px;
+            background-color: var(--blanco);
+            box-shadow: 4px 0 20px var(--sombra);
+            padding: 30px 20px;
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            height: 100vh;
+            left: 0;
+            top: 0;
+            z-index: 100;
+        }
+
+        .logo-contenedor {
+            text-align: center;
+            margin-bottom: 36px;
+        }
+
+        .logo-contenedor h2 {
+            color: var(--azul-oscuro);
+            font-size: 26px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+        }
+
+        .logo-contenedor h2 span {
+            color: var(--verde-jade);
+        }
+
+        .logo-contenedor p {
+            font-size: 12px;
+            color: var(--texto-gris);
+            margin-top: 4px;
+        }
+
+        .btn-primario {
+            background: linear-gradient(135deg, var(--verde-jade), #007a50);
+            color: var(--blanco);
+            border: none;
+            padding: 13px 20px;
+            font-size: 15px;
+            font-weight: 600;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 14px rgba(0, 168, 107, 0.35);
+            margin-bottom: 28px;
+            width: 100%;
+        }
+
+        .btn-primario:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 168, 107, 0.45);
+        }
+
+        .menu-navegacion {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            flex-grow: 1;
+        }
+
+        .btn-menu {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            width: 100%;
+            background: none;
+            border: none;
+            padding: 12px 16px;
+            font-size: 15px;
+            font-weight: 500;
+            text-align: left;
+            cursor: pointer;
+            border-radius: 10px;
+            transition: all 0.2s ease;
+            color: var(--texto-gris);
+        }
+
+        .btn-menu:hover {
+            background-color: rgba(0, 168, 107, 0.08);
+            color: var(--verde-jade);
+        }
+
+        .btn-menu.activo {
+            background: linear-gradient(135deg, var(--azul-oscuro), var(--azul-medio));
+            color: var(--blanco);
+            box-shadow: 0 4px 12px rgba(0, 51, 102, 0.3);
+        }
+
+        .btn-cerrar-sesion {
+            margin-top: auto;
+            color: #ef4444;
+        }
+
+        .btn-cerrar-sesion:hover {
+            background-color: rgba(239, 68, 68, 0.08);
+            color: #dc2626;
+        }
+
+        /* ================================================
+           CONTENIDO PRINCIPAL
+        ================================================ */
+        .contenido-principal {
+            margin-left: 260px;
+            padding: 36px 40px;
+            width: calc(100% - 260px);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .encabezado {
+            margin-bottom: 28px;
+        }
+
+        .encabezado h1 {
+            font-size: 30px;
+            color: var(--azul-oscuro);
+            margin-bottom: 4px;
+        }
+
+        .encabezado p {
+            font-size: 15px;
+            color: var(--texto-gris);
+        }
+
+        /* ================================================
+           VISTAS / PESTAÑAS
+        ================================================ */
+        .vista {
+            display: none;
+            background-color: var(--blanco);
+            border-radius: 16px;
+            box-shadow: 0 4px 24px var(--sombra);
+            padding: 32px;
+            animation: aparecer 0.35s ease-out;
+        }
+
+        .vista.activa {
+            display: block;
+        }
+
+        @keyframes aparecer {
+            from { opacity: 0; transform: translateY(8px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ================================================
+           BARRA DE FILTROS (Mis Citas)
+        ================================================ */
+        .barra-filtros {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 24px;
+            align-items: center;
+        }
+
+        .barra-filtros label {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--texto-gris);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-right: 2px;
+        }
+
+        .filtro-btn {
+            padding: 7px 16px;
+            border-radius: 20px;
+            border: 2px solid var(--borde-suave);
+            background: var(--blanco);
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.18s ease;
+            color: var(--texto-gris);
+        }
+
+        .filtro-btn:hover {
+            border-color: var(--azul-medio);
+            color: var(--azul-medio);
+        }
+
+        .filtro-btn.activo {
+            background-color: var(--azul-oscuro);
+            border-color: var(--azul-oscuro);
+            color: var(--blanco);
+            box-shadow: 0 2px 8px rgba(0,51,102,0.2);
+        }
+
+        .filtro-btn.filtro-pendiente.activo   { background: var(--color-pendiente-ring);  border-color: var(--color-pendiente-ring);  }
+        .filtro-btn.filtro-asistida.activo    { background: var(--color-asistida-ring);   border-color: var(--color-asistida-ring);   }
+        .filtro-btn.filtro-cancelada.activo   { background: var(--color-cancelada-ring);  border-color: var(--color-cancelada-ring);  }
+        .filtro-btn.filtro-no-asistida.activo { background: var(--color-no-asistida-ring);border-color: var(--color-no-asistida-ring);}
+
+        .separador-filtro {
+            width: 1px;
+            height: 28px;
+            background: var(--borde-suave);
+            margin: 0 4px;
+        }
+
+        .filtro-select {
+            padding: 7px 14px;
+            border-radius: 20px;
+            border: 2px solid var(--borde-suave);
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--texto-gris);
+            cursor: pointer;
+            background: var(--blanco);
+            transition: border-color 0.18s;
+            outline: none;
+        }
+
+        .filtro-select:focus {
+            border-color: var(--azul-medio);
+            color: var(--texto-negro);
+        }
+
+        /* ================================================
+           TABLA DE CITAS
+        ================================================ */
+        .tabla-contenedor {
+            width: 100%;
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+        }
+
+        thead {
+            background-color: var(--fondo-gris);
+        }
+
+        th {
+            padding: 14px 16px;
+            font-size: 12px;
+            color: var(--texto-gris);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 2px solid var(--borde-suave);
+        }
+
+        td {
+            padding: 16px;
+            font-size: 14px;
+            border-bottom: 1px solid var(--borde-suave);
+            vertical-align: middle;
+        }
+
+        tr:last-child td { border-bottom: none; }
+
+        tbody tr {
+            transition: background-color 0.15s;
+        }
+
+        tbody tr:hover {
+            background-color: #f9fafb;
+        }
+
+        /* Etiquetas de estado */
+        .estado {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .estado::before {
+            content: '';
+            display: inline-block;
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+        }
+
+        .estado.pendiente    { background: var(--color-pendiente-bg);   color: var(--color-pendiente-txt); }
+        .estado.pendiente::before { background: var(--color-pendiente-ring); }
+
+        .estado.asistida     { background: var(--color-asistida-bg);    color: var(--color-asistida-txt); }
+        .estado.asistida::before  { background: var(--color-asistida-ring); }
+
+        .estado.cancelada    { background: var(--color-cancelada-bg);   color: var(--color-cancelada-txt); }
+        .estado.cancelada::before { background: var(--color-cancelada-ring); }
+
+        .estado.no-asistida  { background: var(--color-no-asistida-bg); color: var(--color-no-asistida-txt); }
+        .estado.no-asistida::before { background: var(--color-no-asistida-ring); }
+
+        /* Botón cancelar en tabla */
+        .btn-cancelar {
+            background: none;
+            border: 1.5px solid #fca5a5;
+            color: #ef4444;
+            font-size: 12px;
+            font-weight: 600;
+            padding: 5px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.18s;
+        }
+
+        .btn-cancelar:hover {
+            background: #fef2f2;
+            border-color: #ef4444;
+        }
+
+        .btn-cancelar:disabled {
+            opacity: 0.35;
+            cursor: default;
+        }
+
+        /* Fila atenuada (cancelada / no asistida fuera de 48h) */
+        tr.atenuada td {
+            opacity: 0.5;
+        }
+
+        /* Mensaje tabla vacía */
+        .tabla-vacia {
+            text-align: center;
+            padding: 48px 0;
+            color: var(--texto-gris);
+            font-size: 15px;
+        }
+
+        /* ================================================
+           MODAL AGENDAR CITA
+        ================================================ */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.45);
+            backdrop-filter: blur(4px);
+            z-index: 200;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-overlay.abierto {
+            display: flex;
+            animation: fadeIn 0.25s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to   { opacity: 1; }
+        }
+
+        .modal {
+            background: var(--blanco);
+            border-radius: 18px;
+            padding: 36px;
+            width: 100%;
+            max-width: 520px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.18);
+            animation: slideUp 0.3s ease;
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(20px); opacity: 0; }
+            to   { transform: translateY(0); opacity: 1; }
+        }
+
+        .modal h3 {
+            font-size: 20px;
+            color: var(--azul-oscuro);
+            margin-bottom: 24px;
+            font-weight: 700;
+        }
+
+        .form-grupo {
+            margin-bottom: 18px;
+        }
+
+        .form-grupo label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--texto-gris);
+            margin-bottom: 7px;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+        }
+
+        .form-grupo input,
+        .form-grupo select,
+        .form-grupo textarea {
+            width: 100%;
+            padding: 11px 14px;
+            border: 2px solid var(--borde-suave);
+            border-radius: 10px;
+            font-size: 14px;
+            color: var(--texto-negro);
+            transition: border-color 0.18s;
+            outline: none;
+            background: var(--blanco);
+        }
+
+        .form-grupo input:focus,
+        .form-grupo select:focus,
+        .form-grupo textarea:focus {
+            border-color: var(--verde-jade);
+        }
+
+        .form-grupo textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .modal-acciones {
+            display: flex;
+            gap: 12px;
+            margin-top: 24px;
+        }
+
+        .btn-secundario {
+            flex: 1;
+            padding: 11px;
+            border-radius: 10px;
+            border: 2px solid var(--borde-suave);
+            background: none;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--texto-gris);
+            cursor: pointer;
+            transition: all 0.18s;
+        }
+
+        .btn-secundario:hover {
+            background: var(--fondo-gris);
+        }
+
+        .btn-guardar {
+            flex: 2;
+            padding: 11px;
+            border-radius: 10px;
+            border: none;
+            background: linear-gradient(135deg, var(--verde-jade), #007a50);
+            color: var(--blanco);
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.18s;
+            box-shadow: 0 4px 12px rgba(0,168,107,0.3);
+        }
+
+        .btn-guardar:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 16px rgba(0,168,107,0.4);
+        }
+
+        /* ================================================
+           PESTAÑA ESTADÍSTICAS
+        ================================================ */
+        .estadisticas-header {
+            margin-bottom: 28px;
+        }
+
+        .estadisticas-header h2 {
+            font-size: 22px;
+            color: var(--azul-oscuro);
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .estadisticas-header p {
+            font-size: 14px;
+            color: var(--texto-gris);
+        }
+
+        /* Controles de filtro para estadísticas */
+        .estadisticas-controles {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+            align-items: flex-end;
+            padding: 20px;
+            background: var(--fondo-gris);
+            border-radius: 12px;
+            margin-bottom: 28px;
+        }
+
+        .control-grupo {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .control-grupo label {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--texto-gris);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .control-grupo select {
+            padding: 9px 14px;
+            border: 2px solid var(--borde-suave);
+            border-radius: 10px;
+            font-size: 14px;
+            color: var(--texto-negro);
+            background: var(--blanco);
+            cursor: pointer;
+            outline: none;
+            transition: border-color 0.18s;
+            min-width: 150px;
+        }
+
+        .control-grupo select:focus {
+            border-color: var(--azul-medio);
+        }
+
+        /* Checkboxes de estado para estadísticas */
+        .checkboxes-estado {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .checkboxes-estado label {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--texto-gris);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 2px;
+        }
+
+        .checkboxes-grupo {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .checkbox-estado {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            padding: 8px 14px;
+            border-radius: 20px;
+            border: 2px solid var(--borde-suave);
+            background: var(--blanco);
+            cursor: pointer;
+            transition: all 0.18s;
+            user-select: none;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--texto-gris);
+        }
+
+        .checkbox-estado input[type="checkbox"] {
+            display: none;
+        }
+
+        .checkbox-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .checkbox-estado:has(input:checked) {
+            color: var(--blanco);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        }
+
+        .checkbox-estado.cb-asistida:has(input:checked)    { background: var(--color-asistida-ring);   border-color: var(--color-asistida-ring);   }
+        .checkbox-estado.cb-cancelada:has(input:checked)   { background: var(--color-cancelada-ring);  border-color: var(--color-cancelada-ring);  }
+        .checkbox-estado.cb-no-asistida:has(input:checked) { background: var(--color-no-asistida-ring);border-color: var(--color-no-asistida-ring);}
+
+        .checkbox-dot.dot-asistida    { background: var(--color-asistida-ring); }
+        .checkbox-dot.dot-cancelada   { background: var(--color-cancelada-ring); }
+        .checkbox-dot.dot-no-asistida { background: var(--color-no-asistida-ring); }
+
+        /* Grid gráficas */
+        .graficas-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+        }
+
+        @media (max-width: 900px) {
+            .graficas-grid { grid-template-columns: 1fr; }
+        }
+
+        .grafica-card {
+            background: var(--blanco);
+            border: 2px solid var(--borde-suave);
+            border-radius: 14px;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .grafica-card h4 {
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--azul-oscuro);
+            margin-bottom: 6px;
+            text-align: center;
+        }
+
+        .grafica-card .grafica-subtitulo {
+            font-size: 12px;
+            color: var(--texto-gris);
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .canvas-contenedor {
+            position: relative;
+            width: 220px;
+            height: 220px;
+            margin-bottom: 20px;
+        }
+
+        /* Leyenda personalizada */
+        .leyenda {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .leyenda-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 12px;
+            border-radius: 8px;
+            background: var(--fondo-gris);
+            font-size: 13px;
+        }
+
+        .leyenda-color {
+            width: 12px;
+            height: 12px;
+            border-radius: 3px;
+            flex-shrink: 0;
+        }
+
+        .leyenda-item span.leyenda-label {
+            flex: 1;
+            color: var(--texto-negro);
+            font-weight: 500;
+        }
+
+        .leyenda-item span.leyenda-valor {
+            font-weight: 700;
+            color: var(--texto-gris);
+        }
+
+        .leyenda-item span.leyenda-pct {
+            font-size: 12px;
+            color: var(--texto-gris);
+        }
+
+        /* Tarjeta sin datos */
+        .sin-datos {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--texto-gris);
+            font-size: 14px;
+        }
+
+        .sin-datos svg {
+            opacity: 0.3;
+            margin-bottom: 12px;
+        }
+
+        /* Tarjeta resumen cumplimiento */
+        .resumen-cumplimiento {
+            grid-column: 1 / -1;
+            background: linear-gradient(135deg, var(--azul-oscuro), var(--azul-medio));
+            border-radius: 14px;
+            padding: 28px 32px;
+            display: flex;
+            align-items: center;
+            gap: 24px;
+            color: var(--blanco);
+        }
+
+        .cumplimiento-numero {
+            font-size: 56px;
+            font-weight: 700;
+            line-height: 1;
+            flex-shrink: 0;
+        }
+
+        .cumplimiento-texto h4 {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 6px;
+        }
+
+        .cumplimiento-texto p {
+            font-size: 13px;
+            opacity: 0.8;
+        }
+
+        /* Barra de progreso */
+        .barra-progreso-contenedor {
+            flex: 1;
+        }
+
+        .barra-progreso-label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            margin-bottom: 6px;
+            opacity: 0.8;
+        }
+
+        .barra-progreso {
+            height: 10px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 5px;
+            overflow: hidden;
+        }
+
+        .barra-progreso-fill {
+            height: 100%;
+            background: var(--verde-jade);
+            border-radius: 5px;
+            transition: width 0.8s ease;
+        }
+
+        /* ================================================
+           UTILIDADES
+        ================================================ */
+        .mt-16 { margin-top: 16px; }
+
+    </style>
+</head>
+<body>
+
+    <!-- BARRA LATERAL -->
+    <aside class="barra-lateral">
+        <div class="logo-contenedor">
+            <h2>Medi<span>cronos</span></h2>
+            <p>Gestión de citas médicas</p>
+        </div>
+
+        <button class="btn-primario" id="btn-abrir-modal" onclick="abrirModal()">
+            ＋ Programar cita
+        </button>
+
+        <nav class="menu-navegacion">
+            <button class="btn-menu activo" onclick="cambiarPestaña('pestaña-citas', this)">
+                📅 Mis Citas
+            </button>
+            <button class="btn-menu" onclick="cambiarPestaña('pestaña-estadisticas', this)">
+                📊 Estadísticas
+            </button>
+        </nav>
+
+        <button class="btn-menu btn-cerrar-sesion" onclick="cerrarSesion()">
+            🚪 Cerrar sesión
+        </button>
+    </aside>
+
+    <!-- CONTENIDO PRINCIPAL -->
+    <main class="contenido-principal">
+
+        <div class="encabezado">
+            <h1>Bienvenido a su cuenta</h1>
+            <p>Revise el estado de sus citas y acceda a las gráficas de cumplimiento</p>
+        </div>
+
+        <!-- ============================================
+             PESTAÑA: MIS CITAS
+        ============================================ -->
+        <section id="pestaña-citas" class="vista activa">
+
+            <!-- Filtros por estado -->
+            <div class="barra-filtros">
+                <label>Estado:</label>
+                <button class="filtro-btn activo" id="filtro-todos-estado" onclick="setFiltroEstado('todos', this)">Todos</button>
+                <button class="filtro-btn filtro-pendiente"    onclick="setFiltroEstado('pendiente', this)">⬤ Pendiente</button>
+                <button class="filtro-btn filtro-asistida"     onclick="setFiltroEstado('asistida', this)">⬤ Asistida</button>
+                <button class="filtro-btn filtro-cancelada"    onclick="setFiltroEstado('cancelada', this)">⬤ Cancelada</button>
+                <button class="filtro-btn filtro-no-asistida"  onclick="setFiltroEstado('no-asistida', this)">⬤ No asistida</button>
+
+                <div class="separador-filtro"></div>
+
+                <label>Tipo:</label>
+                <select class="filtro-select" id="filtro-tipo" onchange="aplicarFiltros()">
+                    <option value="todos">Todos los tipos</option>
+                    <option value="Salud">Salud</option>
+                    <option value="Estudio">Estudio</option>
+                    <option value="Estética">Estética</option>
+                    <option value="Trámites">Trámites</option>
+                    <option value="Otras">Otras</option>
+                </select>
+            </div>
+
+            <!-- Tabla -->
+            <div class="tabla-contenedor">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Fecha y Hora</th>
+                            <th>Tipo de Cita</th>
+                            <th>Lugar</th>
+                            <th>Descripción</th>
+                            <th>Estado</th>
+                            <th>Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody id="cuerpo-tabla-citas">
+                        <!-- Filas insertadas por JS -->
+                    </tbody>
+                </table>
+                <div id="tabla-vacia-msg" class="tabla-vacia" style="display:none;">
+                    No hay citas que coincidan con los filtros seleccionados.
+                </div>
+            </div>
+        </section>
+
+        <!-- ============================================
+             PESTAÑA: ESTADÍSTICAS
+        ============================================ -->
+        <section id="pestaña-estadisticas" class="vista">
+
+            <div class="estadisticas-header">
+                <h2>Estadísticas de Citas</h2>
+                <p>Visualice el cumplimiento y compare las citas por tipo y estado</p>
+            </div>
+
+            <!-- Controles de filtro -->
+            <div class="estadisticas-controles">
+
+                <div class="control-grupo">
+                    <label>Mes</label>
+                    <select id="filtro-mes-stats" onchange="actualizarEstadisticas()">
+                        <option value="todos">Todos los meses</option>
+                        <option value="0">Enero</option>
+                        <option value="1">Febrero</option>
+                        <option value="2">Marzo</option>
+                        <option value="3">Abril</option>
+                        <option value="4">Mayo</option>
+                        <option value="5">Junio</option>
+                        <option value="6">Julio</option>
+                        <option value="7">Agosto</option>
+                        <option value="8">Septiembre</option>
+                        <option value="9">Octubre</option>
+                        <option value="10">Noviembre</option>
+                        <option value="11">Diciembre</option>
+                    </select>
+                </div>
+
+                <div class="control-grupo">
+                    <label>Tipo de cita</label>
+                    <select id="filtro-tipo-stats" onchange="actualizarEstadisticas()">
+                        <option value="todos">Todos los tipos</option>
+                        <option value="Salud">Salud</option>
+                        <option value="Estudio">Estudio</option>
+                        <option value="Estética">Estética</option>
+                        <option value="Trámites">Trámites</option>
+                        <option value="Otras">Otras</option>
+                    </select>
+                </div>
+
+                <div class="checkboxes-estado">
+                    <label>Estados a comparar (seleccione 2 o 3)</label>
+                    <div class="checkboxes-grupo">
+                        <label class="checkbox-estado cb-asistida">
+                            <input type="checkbox" id="cb-asistida" checked onchange="actualizarEstadisticas()">
+                            <span class="checkbox-dot dot-asistida"></span>
+                            Asistida
+                        </label>
+                        <label class="checkbox-estado cb-cancelada">
+                            <input type="checkbox" id="cb-cancelada" checked onchange="actualizarEstadisticas()">
+                            <span class="checkbox-dot dot-cancelada"></span>
+                            Cancelada
+                        </label>
+                        <label class="checkbox-estado cb-no-asistida">
+                            <input type="checkbox" id="cb-no-asistida" checked onchange="actualizarEstadisticas()">
+                            <span class="checkbox-dot dot-no-asistida"></span>
+                            No asistida
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Gráficas -->
+            <div class="graficas-grid" id="graficas-grid">
+                <!-- Las gráficas se generan por JS -->
+            </div>
+
+        </section>
+
+    </main>
+
+    <!-- ============================================
+         MODAL: PROGRAMAR CITA
+    ============================================ -->
+    <div class="modal-overlay" id="modal-overlay" onclick="cerrarModalOverlay(event)">
+        <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-titulo">
+            <h3 id="modal-titulo">📅 Programar Nueva Cita</h3>
+
+            <div class="form-grupo">
+                <label for="inp-titulo">Título de la cita</label>
+                <input type="text" id="inp-titulo" placeholder="Ej: Cita con el cardiólogo">
+            </div>
+
+            <div class="form-grupo">
+                <label for="inp-tipo">Tipo de cita</label>
+                <select id="inp-tipo">
+                    <option value="">-- Seleccionar tipo --</option>
+                    <option value="Salud">Salud</option>
+                    <option value="Estudio">Estudio</option>
+                    <option value="Estética">Estética</option>
+                    <option value="Trámites">Trámites</option>
+                    <option value="Otras">Otras</option>
+                </select>
+            </div>
+
+            <!-- Lugar predefinido (espacios limitados) -->
+            <div class="form-grupo">
+                <label for="inp-lugar">Lugar / Clínica</label>
+                <select id="inp-lugar">
+                    <option value="">-- Seleccionar lugar --</option>
+                    <option value="Clínica Norte">Clínica Norte</option>
+                    <option value="Clínica Sur">Clínica Sur</option>
+                    <option value="Clínica Este">Clínica Este</option>
+                    <option value="Clínica Oeste">Clínica Oeste</option>
+                </select>
+            </div>
+
+            <div style="display: flex; gap: 14px;">
+                <div class="form-grupo" style="flex:1">
+                    <label for="inp-fecha">Fecha</label>
+                    <input type="date" id="inp-fecha">
+                </div>
+                <div class="form-grupo" style="flex:1">
+                    <label for="inp-hora">Hora</label>
+                    <input type="time" id="inp-hora">
+                </div>
+            </div>
+
+            <div class="form-grupo">
+                <label for="inp-descripcion">Descripción (opcional)</label>
+                <textarea id="inp-descripcion" placeholder="Añade notas o detalles relevantes..."></textarea>
+            </div>
+
+            <div class="modal-acciones">
+                <button class="btn-secundario" onclick="cerrarModal()">Cancelar</button>
+                <button class="btn-guardar" onclick="guardarCita()">Guardar cita</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================
+         JAVASCRIPT
+    ============================================ -->
+    <script>
+    // ================================================================
+    //  DATOS GLOBALES
+    // ================================================================
+
+    /**
+     * Los 4 estados posibles de una cita:
+     *  - pendiente    → cita programada, no realizada aún
+     *  - asistida     → completada / asistida (COMPLETADA en Java)
+     *  - cancelada    → cancelada por el usuario (CANCELADA en Java)
+     *  - no-asistida  → no se presentó / vencida (VENCIDA en Java)
+     */
+
+    // Colores fijos por estado (deben coincidir con las variables CSS)
+    const COLORES_ESTADO = {
+        'asistida':    '#10b981',   // verde
+        'cancelada':   '#f43f5e',   // rojo
+        'no-asistida': '#8b5cf6',   // violeta
+        'pendiente':   '#f59e0b',   // ámbar
+    };
+
+    // Lugares predefinidos (no editables por el usuario)
+    const LUGARES = ['Clínica Norte', 'Clínica Sur', 'Clínica Este', 'Clínica Oeste'];
+
+    // Estado global de filtros de la pestaña Mis Citas
+    let filtroEstadoActual = 'todos';
+
+    // Instancias de Chart.js activas
+    let graficasPorTipo  = null;
+    let graficasPorEstado = null;
+
+    // ----------------------------------------------------------------
+    // DATOS DE EJEMPLO – simulan respuesta del backend Java
+    // ----------------------------------------------------------------
+    const ahora = new Date();
+
+    function ts(diasOffset, horas = 10, minutos = 0) {
+        const d = new Date(ahora);
+        d.setDate(d.getDate() + diasOffset);
+        d.setHours(horas, minutos, 0, 0);
+        return d;
+    }
+
+    /**
+     * fechaCambioEstado: momento en que la cita pasó a cancelada / no-asistida.
+     * Solo se usa para aplicar la regla de visibilidad de 48 h.
+     */
+    let listadoCitas = [
+        // — Pendientes (futuras) —
+        { id: 'c01', titulo: 'Control tensión',       tipo: 'Salud',    lugar: 'Clínica Norte', descripcion: 'Seguimiento mensual',         fecha: ts(5,  9, 0),  estado: 'pendiente',   fechaCambioEstado: null },
+        { id: 'c02', titulo: 'Vacuna antigripal',      tipo: 'Salud',    lugar: 'Clínica Sur',   descripcion: 'Campaña anual',               fecha: ts(8, 11, 0),  estado: 'pendiente',   fechaCambioEstado: null },
+        { id: 'c03', titulo: 'Examen parcial Química', tipo: 'Estudio',  lugar: 'Clínica Este',  descripcion: 'Unidad 3 – termodinámica',    fecha: ts(3, 14, 0),  estado: 'pendiente',   fechaCambioEstado: null },
+        // — Asistidas —
+        { id: 'c04', titulo: 'Consulta dermatólogo',   tipo: 'Salud',    lugar: 'Clínica Norte', descripcion: 'Revisión de lunares',         fecha: ts(-10,10, 0), estado: 'asistida',    fechaCambioEstado: ts(-10,10,30) },
+        { id: 'c05', titulo: 'Limpieza dental',        tipo: 'Estética', lugar: 'Clínica Oeste', descripcion: 'Limpieza y blanqueamiento',   fecha: ts(-5,  9,30), estado: 'asistida',    fechaCambioEstado: ts(-5,  9,45) },
+        { id: 'c06', titulo: 'Asesoría académica',     tipo: 'Estudio',  lugar: 'Clínica Este',  descripcion: 'Orientación vocacional',      fecha: ts(-20,16, 0), estado: 'asistida',    fechaCambioEstado: ts(-20,16,30) },
+        { id: 'c07', titulo: 'Trámite pasaporte',      tipo: 'Trámites', lugar: 'Clínica Sur',   descripcion: 'Renovación',                  fecha: ts(-2, 10, 0), estado: 'asistida',    fechaCambioEstado: ts(-2, 10,30) },
+        // — Canceladas (algunas dentro de 48h, otras fuera) —
+        { id: 'c08', titulo: 'Cita nutricionista',     tipo: 'Salud',    lugar: 'Clínica Sur',   descripcion: 'Primera consulta',            fecha: ts(-1, 15, 0), estado: 'cancelada',   fechaCambioEstado: ts(-1, 15,10) },   // 1d atrás → visible 48h
+        { id: 'c09', titulo: 'Sesión psicología',      tipo: 'Salud',    lugar: 'Clínica Norte', descripcion: 'Sesión semanal',              fecha: ts(-3, 17, 0), estado: 'cancelada',   fechaCambioEstado: ts(-3, 17, 5) },   // 3d atrás → OCULTA (> 48h)
+        // — No asistidas (una dentro de 48h, otra fuera) —
+        { id: 'c10', titulo: 'Radiografía de tórax',   tipo: 'Salud',    lugar: 'Clínica Oeste', descripcion: 'Control pulmonar',            fecha: ts(-1,  8, 0), estado: 'no-asistida', fechaCambioEstado: ts(-1,  8, 0) },   // 1d atrás → visible 48h
+        { id: 'c11', titulo: 'Corte de cabello',       tipo: 'Estética', lugar: 'Clínica Este',  descripcion: 'Estilismo',                   fecha: ts(-5, 11, 0), estado: 'no-asistida', fechaCambioEstado: ts(-5, 11, 0) },   // 5d atrás → OCULTA
+        // — Trámites / Otras —
+        { id: 'c12', titulo: 'Notaría – firma contrato', tipo: 'Trámites', lugar: 'Clínica Norte', descripcion: 'Contrato de arrendamiento', fecha: ts(12,10, 0), estado: 'pendiente',   fechaCambioEstado: null },
+        { id: 'c13', titulo: 'Solicitud certificado',  tipo: 'Otras',    lugar: 'Clínica Sur',   descripcion: 'Certificado laboral',         fecha: ts(7, 15,30), estado: 'pendiente',   fechaCambioEstado: null },
+    ];
+
+    // ================================================================
+    //  UTILIDADES
+    // ================================================================
+
+    /** Formatea una fecha en DD/MM/YYYY */
+    function formatFecha(d) {
+        return d.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    }
+
+    /** Formatea la hora en HH:MM */
+    function formatHora(d) {
+        return d.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+    }
+
+    /** Devuelve true si han pasado menos de 48h desde fechaCambio */
+    function dentroDe48h(fechaCambio) {
+        if (!fechaCambio) return false;
+        const diff = ahora - fechaCambio;
+        return diff < 48 * 60 * 60 * 1000;
+    }
+
+    /** Genera la etiqueta HTML de estado */
+    function etiquetaEstado(estado) {
+        const textos = {
+            'pendiente':   'Pendiente',
+            'asistida':    'Asistida',
+            'cancelada':   'Cancelada',
+            'no-asistida': 'No asistida',
+        };
+        return `<span class="estado ${estado}">${textos[estado] || estado}</span>`;
+    }
+
+    // ================================================================
+    //  PESTAÑA MIS CITAS — FILTROS Y RENDERIZADO
+    // ================================================================
+
+    function setFiltroEstado(estado, boton) {
+        filtroEstadoActual = estado;
+        document.querySelectorAll('.barra-filtros .filtro-btn').forEach(b => b.classList.remove('activo'));
+        boton.classList.add('activo');
+        aplicarFiltros();
+    }
+
+    function aplicarFiltros() {
+        const filtroTipo = document.getElementById('filtro-tipo').value;
+        const cuerpo = document.getElementById('cuerpo-tabla-citas');
+        const msgVacio = document.getElementById('tabla-vacia-msg');
+
+        let filas = '';
+        let contadorVisible = 0;
+
+        listadoCitas.forEach(cita => {
+            // ── Regla de visibilidad 48 h ──────────────────────────────
+            // Canceladas y no-asistidas están ocultas por defecto
+            // salvo que el usuario las filtre explícitamente o estén dentro de 48h
+            const esOcultaPorDefecto =
+                (cita.estado === 'cancelada' || cita.estado === 'no-asistida')
+                && !dentroDe48h(cita.fechaCambioEstado);
+
+            // Si el usuario filtró por ese estado concreto, la mostramos de todas formas
+            const filtraExplicitamente = (filtroEstadoActual === cita.estado);
+
+            if (esOcultaPorDefecto && !filtraExplicitamente) return;
+
+            // ── Filtro por estado ──────────────────────────────────────
+            if (filtroEstadoActual !== 'todos' && cita.estado !== filtroEstadoActual) return;
+
+            // ── Filtro por tipo ────────────────────────────────────────
+            if (filtroTipo !== 'todos' && cita.tipo !== filtroTipo) return;
+
+            contadorVisible++;
+
+            // ── Botón cancelar ─────────────────────────────────────────
+            const puedeCancel = (cita.estado === 'pendiente');
+            const btnCancelar = puedeCancel
+                ? `<button class="btn-cancelar" onclick="cancelarCita('${cita.id}')">Cancelar</button>`
+                : `<button class="btn-cancelar" disabled title="Solo se pueden cancelar citas pendientes">Cancelar</button>`;
+
+            filas += `
+                <tr id="fila-${cita.id}">
+                    <td><strong>${formatFecha(cita.fecha)}</strong><br>
+                        <span style="font-size:12px;color:var(--texto-gris)">${formatHora(cita.fecha)}</span></td>
+                    <td>${cita.tipo}</td>
+                    <td>${cita.lugar}</td>
+                    <td style="max-width:200px;color:var(--texto-gris);font-size:13px">${cita.descripcion || '—'}</td>
+                    <td>${etiquetaEstado(cita.estado)}</td>
+                    <td>${btnCancelar}</td>
+                </tr>
+            `;
+        });
+
+        cuerpo.innerHTML = filas;
+        msgVacio.style.display = contadorVisible === 0 ? 'block' : 'none';
+    }
+
+    /** Cancela una cita pendiente (la marca como 'cancelada') */
+    function cancelarCita(id) {
+        const cita = listadoCitas.find(c => c.id === id);
+        if (!cita) return;
+        if (!confirm(`¿Desea cancelar la cita "${cita.titulo}"?`)) return;
+
+        cita.estado = 'cancelada';
+        cita.fechaCambioEstado = new Date();
+        aplicarFiltros();
+    }
+
+    // ================================================================
+    //  MODAL AGENDAR CITA
+    // ================================================================
+
+    function abrirModal() {
+        document.getElementById('modal-overlay').classList.add('abierto');
+        // Establece la fecha mínima como hoy
+        const hoy = new Date().toISOString().split('T')[0];
+        document.getElementById('inp-fecha').min = hoy;
+    }
+
+    function cerrarModal() {
+        document.getElementById('modal-overlay').classList.remove('abierto');
+        limpiarModal();
+    }
+
+    function cerrarModalOverlay(event) {
+        if (event.target === document.getElementById('modal-overlay')) {
+            cerrarModal();
+        }
+    }
+
+    function limpiarModal() {
+        ['inp-titulo','inp-descripcion'].forEach(id => document.getElementById(id).value = '');
+        ['inp-tipo','inp-lugar','inp-fecha','inp-hora'].forEach(id => document.getElementById(id).value = '');
+    }
+
+    function guardarCita() {
+        const titulo = document.getElementById('inp-titulo').value.trim();
+        const tipo   = document.getElementById('inp-tipo').value;
+        const lugar  = document.getElementById('inp-lugar').value;
+        const fecha  = document.getElementById('inp-fecha').value;
+        const hora   = document.getElementById('inp-hora').value;
+        const desc   = document.getElementById('inp-descripcion').value.trim();
+
+        if (!titulo || !tipo || !lugar || !fecha || !hora) {
+            alert('Por favor, complete todos los campos obligatorios.');
+            return;
+        }
+
+        // Validar que el lugar sea uno de los predefinidos (doble check)
+        if (!LUGARES.includes(lugar)) {
+            alert('El lugar seleccionado no es válido.');
+            return;
+        }
+
+        const fechaHora = new Date(`${fecha}T${hora}`);
+        const nuevaId   = 'c' + Date.now();
+
+        listadoCitas.push({
+            id: nuevaId,
+            titulo,
+            tipo,
+            lugar,
+            descripcion: desc,
+            fecha: fechaHora,
+            estado: 'pendiente',
+            fechaCambioEstado: null,
+        });
+
+        cerrarModal();
+        aplicarFiltros();
+        actualizarEstadisticas();
+    }
+
+    // ================================================================
+    //  PESTAÑA ESTADÍSTICAS
+    // ================================================================
+
+    /**
+     * Filtra las citas según mes y tipo seleccionados en el panel de estadísticas.
+     * No aplica la regla de 48h (estadísticas históricas completas).
+     */
+    function citasFiltradas() {
+        const mes  = document.getElementById('filtro-mes-stats').value;
+        const tipo = document.getElementById('filtro-tipo-stats').value;
+
+        return listadoCitas.filter(cita => {
+            const pasaMes  = mes  === 'todos' || cita.fecha.getMonth() === parseInt(mes);
+            const pasaTipo = tipo === 'todos' || cita.tipo === tipo;
+            return pasaMes && pasaTipo;
+        });
+    }
+
+    /** Calcula cuántas citas hay por cada estado dentro del conjunto dado */
+    function contarPorEstado(citas, estados) {
+        const conteos = {};
+        estados.forEach(e => { conteos[e] = 0; });
+        citas.forEach(c => {
+            if (estados.includes(c.estado)) conteos[c.estado]++;
+        });
+        return conteos;
+    }
+
+    /** Calcula cuántas citas hay por tipo */
+    function contarPorTipo(citas) {
+        const conteos = {};
+        citas.forEach(c => {
+            conteos[c.tipo] = (conteos[c.tipo] || 0) + 1;
+        });
+        return conteos;
+    }
+
+    /** Renderiza o actualiza todas las gráficas */
+    function actualizarEstadisticas() {
+        // Leer estados seleccionados
+        const estadosActivos = [];
+        if (document.getElementById('cb-asistida').checked)    estadosActivos.push('asistida');
+        if (document.getElementById('cb-cancelada').checked)   estadosActivos.push('cancelada');
+        if (document.getElementById('cb-no-asistida').checked) estadosActivos.push('no-asistida');
+
+        const citas    = citasFiltradas();
+        const totalAlt = citas.filter(c => ['asistida','cancelada','no-asistida'].includes(c.estado)).length;
+        const asistidas = citas.filter(c => c.estado === 'asistida').length;
+        const pct       = totalAlt > 0 ? Math.round((asistidas / totalAlt) * 100) : 0;
+
+        const grid = document.getElementById('graficas-grid');
+        grid.innerHTML = '';
+
+        // ── Tarjeta de cumplimiento ──────────────────────────────────────
+        const cardCumpl = document.createElement('div');
+        cardCumpl.className = 'resumen-cumplimiento';
+        cardCumpl.innerHTML = `
+            <div class="cumplimiento-numero">${pct}%</div>
+            <div class="cumplimiento-texto">
+                <h4>Tasa de Cumplimiento</h4>
+                <p>${asistidas} citas asistidas de ${totalAlt} citas finalizadas</p>
+            </div>
+            <div class="barra-progreso-contenedor">
+                <div class="barra-progreso-label">
+                    <span>0%</span><span>100%</span>
+                </div>
+                <div class="barra-progreso">
+                    <div class="barra-progreso-fill" style="width:${pct}%"></div>
+                </div>
+            </div>
+        `;
+        grid.appendChild(cardCumpl);
+
+        // ── Gráfica por estado ───────────────────────────────────────────
+        if (estadosActivos.length >= 2) {
+            const conteos    = contarPorEstado(citas, estadosActivos);
+            const etiquetas  = { 'asistida': 'Asistida', 'cancelada': 'Cancelada', 'no-asistida': 'No asistida' };
+            const labels     = estadosActivos.map(e => etiquetas[e]);
+            const valores    = estadosActivos.map(e => conteos[e]);
+            const colores    = estadosActivos.map(e => COLORES_ESTADO[e]);
+            const total      = valores.reduce((a,b) => a+b, 0);
+
+            const cardEstado = crearTarjetaGrafica(
+                'Distribución por Estado',
+                'Comparativa de estados seleccionados',
+                'grafica-estados',
+                labels, valores, colores, total
+            );
+            grid.appendChild(cardEstado);
+        } else {
+            const card = document.createElement('div');
+            card.className = 'grafica-card';
+            card.innerHTML = `
+                <h4>Distribución por Estado</h4>
+                <div class="sin-datos">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><circle cx="12" cy="16" r="1" fill="currentColor"/>
+                    </svg>
+                    <p>Seleccione al menos 2 estados<br>para visualizar la gráfica.</p>
+                </div>`;
+            grid.appendChild(card);
+        }
+
+        // ── Gráfica por tipo ─────────────────────────────────────────────
+        const conteoPorTipo = contarPorTipo(citas);
+        const tiposLabels   = Object.keys(conteoPorTipo);
+        const tiposValores  = Object.values(conteoPorTipo);
+        const totalTipo     = tiposValores.reduce((a,b) => a+b, 0);
+
+        const COLORES_TIPO = {
+            'Salud':    '#0ea5e9',
+            'Estudio':  '#f59e0b',
+            'Estética': '#ec4899',
+            'Trámites': '#6366f1',
+            'Otras':    '#14b8a6',
+        };
+        const tiposColores = tiposLabels.map(t => COLORES_TIPO[t] || '#9ca3af');
+
+        if (tiposLabels.length > 0) {
+            const cardTipo = crearTarjetaGrafica(
+                'Distribución por Tipo',
+                'Citas agrupadas por categoría de tipo',
+                'grafica-tipos',
+                tiposLabels, tiposValores, tiposColores, totalTipo
+            );
+            grid.appendChild(cardTipo);
+        } else {
+            const card = document.createElement('div');
+            card.className = 'grafica-card';
+            card.innerHTML = `<h4>Distribución por Tipo</h4>
+                <div class="sin-datos"><p>No hay datos para los filtros seleccionados.</p></div>`;
+            grid.appendChild(card);
+        }
+    }
+
+    /**
+     * Crea una tarjeta con gráfica circular (doughnut) y su leyenda.
+     */
+    function crearTarjetaGrafica(titulo, subtitulo, canvasId, labels, valores, colores, total) {
+        const card = document.createElement('div');
+        card.className = 'grafica-card';
+
+        // Leyenda HTML
+        let leyendaHtml = '';
+        labels.forEach((label, i) => {
+            const pct = total > 0 ? Math.round((valores[i] / total) * 100) : 0;
+            leyendaHtml += `
+                <div class="leyenda-item">
+                    <span class="leyenda-color" style="background:${colores[i]}"></span>
+                    <span class="leyenda-label">${label}</span>
+                    <span class="leyenda-valor">${valores[i]}</span>
+                    <span class="leyenda-pct">(${pct}%)</span>
+                </div>`;
+        });
+
+        card.innerHTML = `
+            <h4>${titulo}</h4>
+            <p class="grafica-subtitulo">${subtitulo}</p>
+            <div class="canvas-contenedor">
+                <canvas id="${canvasId}"></canvas>
+            </div>
+            <div class="leyenda">${leyendaHtml}</div>
+        `;
+
+        // Necesitamos insertar al DOM antes de iniciar Chart.js
+        // Se hace con setTimeout 0 tras retornar
+        setTimeout(() => {
+            const ctx = document.getElementById(canvasId);
+            if (!ctx) return;
+            // Destruir instancia previa si existe
+            const previo = Chart.getChart(canvasId);
+            if (previo) previo.destroy();
+
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels,
+                    datasets: [{
+                        data: valores,
+                        backgroundColor: colores,
+                        borderWidth: 3,
+                        borderColor: '#ffffff',
+                        hoverOffset: 8,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    cutout: '62%',
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const val = context.parsed;
+                                    const tot = context.dataset.data.reduce((a,b)=>a+b,0);
+                                    const pct = tot > 0 ? Math.round((val/tot)*100) : 0;
+                                    return ` ${context.label}: ${val} (${pct}%)`;
+                                }
+                            }
+                        }
+                    },
+                    animation: {
+                        animateRotate: true,
+                        duration: 700,
+                    }
+                }
+            });
+        }, 0);
+
+        return card;
+    }
+
+    // ================================================================
+    //  CAMBIO DE PESTAÑA
+    // ================================================================
+
+    function cambiarPestaña(idPestaña, botonClicado) {
+        document.querySelectorAll('.vista').forEach(v => v.classList.remove('activa'));
+        const vista = document.getElementById(idPestaña);
+        if (vista) vista.classList.add('activa');
+
+        document.querySelectorAll('.btn-menu:not(.btn-cerrar-sesion)').forEach(b => b.classList.remove('activo'));
+        if (botonClicado) botonClicado.classList.add('activo');
+
+        if (idPestaña === 'pestaña-estadisticas') {
+            actualizarEstadisticas();
+        }
+    }
+
+    // ================================================================
+    //  CERRAR SESIÓN
+    // ================================================================
+
+    function cerrarSesion() {
+        if (confirm('¿Está seguro de que desea cerrar sesión?')) {
+            alert('Cerrando sesión (simulado)...');
+        }
+    }
+
+    // ================================================================
+    //  INICIALIZACIÓN
+    // ================================================================
+    document.addEventListener('DOMContentLoaded', () => {
+        aplicarFiltros();
+    });
+
+    </script>
+</body>
+</html>

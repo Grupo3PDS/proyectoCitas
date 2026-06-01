@@ -63,3 +63,47 @@ public class CitaControlador {
             return ResponseEntity.status(409).body(Map.of("error", "El horario seleccionado ya no está disponible. Por favor elija otro."));
         }
     }
+
+    @PutMapping
+    public ResponseEntity<Map<String, String>> editarCita(@RequestBody Cita cita) {
+        boolean exito = citaServicio.modificarCita(cita);
+        if (exito) {
+            return ResponseEntity.ok(Map.of("mensaje", "Cita actualizada correctamente"));
+        } else {
+            return ResponseEntity.status(400).body(Map.of("error", "No se pudo actualizar la cita"));
+        }
+    }
+
+    /** Cancela una cita pendiente (en vez de eliminarla) */
+    @PatchMapping("/cancelar/{id}")
+    public ResponseEntity<String> cancelarCita(@PathVariable int id) {
+        boolean exito = citaServicio.cancelarCita(id);
+        return exito
+            ? ResponseEntity.ok("Cita cancelada correctamente")
+            : ResponseEntity.status(400).body("No se pudo cancelar la cita");
+    }
+
+    @PatchMapping("/asistir/{id}")
+    public ResponseEntity<String> marcarAsistida(@PathVariable int id) {
+        boolean exito = citaServicio.marcarAsistida(id);
+        return exito
+            ? ResponseEntity.ok("Cita marcada como completada")
+            : ResponseEntity.status(400).body("No se pudo actualizar el estado");
+    }
+
+    @PatchMapping("/no-asistida/{id}")
+    public ResponseEntity<String> marcarNoAsistida(@PathVariable int id) {
+        boolean exito = citaServicio.marcarNoAsistida(id);
+        return exito
+            ? ResponseEntity.ok("Cita marcada como no asistida")
+            : ResponseEntity.status(400).body("No se pudo actualizar el estado");
+    }
+
+    @DeleteMapping("/borrar/{id}")
+    public ResponseEntity<String> eliminarCita(@PathVariable int id) {
+        boolean exito = citaServicio.eliminarCitaDefinitivo(id);
+        return exito
+            ? ResponseEntity.ok("Cita eliminada")
+            : ResponseEntity.status(400).body("No se encontró la cita");
+    }
+}
