@@ -885,6 +885,9 @@
             <div id="alerta-24h" class="mensaje-alerta" style="display: none; background-color: #fff3cd; color: #856404; border-left: 4px solid #ffeeba; margin-bottom: 16px;">
                 <strong>⚠️ Atención:</strong> Tienes citas pendientes programadas para las próximas 24 horas.
             </div>
+            <div id="alerta-conflicto" class="mensaje-alerta" style="display: none; background-color: #fff3cd; color: #856404; border-left: 4px solid #ffeeba; margin-bottom: 16px;">
+                <strong>⚠️ Conflicto de Horario:</strong> Existe un conflicto de horario entre algunas de tus citas. Sugerimos reagendar alguna.
+            </div>
 
             <!-- Barra de filtros -->
             <div class="barra-filtros">
@@ -1051,8 +1054,9 @@
                         <option value="Clínica Oeste">Clínica Oeste</option>
                     </select>
                 </div>
+                <div style="margin-top: 20px;">
+                    <button type="submit" class="btn-primario" style="background-color: #10b981; border-color: #10b981; color: white;">Guardar Cita</button>
                 </div>
-                <button type="submit" class="btn-primario">Guardar Cita</button>
             </form>
         </div>
     </div>
@@ -1421,6 +1425,8 @@
                 }
 
                 let hayCitasEnProximas24h = false;
+                let hayConflictoDeHorario = false;
+                const fechasHoras = new Set();
                 const ahora = new Date();
 
                 // Auto-expirar citas pendientes que pasaron hace más de 24h
@@ -1441,10 +1447,22 @@
                     if (estadoMin === 'pendiente' && diffHoras >= 0 && diffHoras <= 24) {
                         hayCitasEnProximas24h = true;
                     }
+
+                    if (estadoMin === 'pendiente' || estadoMin === 'completada') {
+                        const llave = `${cita.fecha}_${cita.hora}`;
+                        if (fechasHoras.has(llave)) {
+                            hayConflictoDeHorario = true;
+                        } else {
+                            fechasHoras.add(llave);
+                        }
+                    }
                 }
 
                 const alerta24h = document.getElementById('alerta-24h');
                 if (alerta24h) alerta24h.style.display = hayCitasEnProximas24h ? 'block' : 'none';
+
+                const alertaConflicto = document.getElementById('alerta-conflicto');
+                if (alertaConflicto) alertaConflicto.style.display = hayConflictoDeHorario ? 'block' : 'none';
 
                 // Guardar en cache y renderizar con filtros activos
                 listadoCitasCache = listadoCitas;

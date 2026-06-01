@@ -47,9 +47,11 @@ public class CitaControlador {
             }
         }
 
-        // Filtrar los ocupados
-        todosLosHorarios.removeIf(h -> horasOcupadas.stream()
-            .anyMatch(ocupada -> ocupada.startsWith(h)));
+        // Filtrar los ocupados (solo si las 4 clínicas están ocupadas a esa misma hora)
+        todosLosHorarios.removeIf(h -> {
+            long conteo = horasOcupadas.stream().filter(ocupada -> ocupada.startsWith(h)).count();
+            return conteo >= 4;
+        });
 
         return todosLosHorarios;
     }
@@ -58,9 +60,25 @@ public class CitaControlador {
     public ResponseEntity<Map<String, String>> crearCita(@RequestBody Cita nuevaCita) {
         boolean exito = citaServicio.guardarNuevaCita(nuevaCita);
         if (exito) {
+            // Check if user has another appointment at the same time (conflict)
+            List<Cita> citasDelUsuario = citaServicio.obtenerCitasUsuario(nuevaCita.getUsuarioId());
+            long conflictos = citasDelUsuario.stream()
+                .filter(c -> c.getFecha().equals(nuevaCita.getFecha()) 
+                          && c.getHora().equals(nuevaCita.getHora())
+                          && c.getId() != nuevaCita.getId()
+                          && ("pendiente".equalsIgnoreCase(c.getEstado()) || "completada".equalsIgnoreCase(c.getEstado())))
+                .count();
+
+            if (conflictos > 0) {
+                return ResponseEntity.status(201).body(Map.of(
+                    "mensaje", "Cita agendada correctamente",
+                    "warning", "Existe un conflicto de horario entre tus citas. Sugerimos reagendar alguna."
+                ));
+            }
+
             return ResponseEntity.status(201).body(Map.of("mensaje", "Cita agendada correctamente"));
         } else {
-            return ResponseEntity.status(409).body(Map.of("error", "El horario seleccionado ya no está disponible. Por favor elija otro."));
+            return ResponseEntity.status(409).body(Map.of("error", "El horario seleccionado ya no está disponible en esa clínica. Por favor elija otro horario o lugar."));
         }
     }
 
