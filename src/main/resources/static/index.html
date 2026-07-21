@@ -1311,6 +1311,9 @@
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
                 <strong>Reminder:</strong> You have pending appointments scheduled within the next 24 hours.
             </div>
+            <div id="alerta-conflicto" class="mensaje-alerta" style="display: none; background-color: #fff3cd; color: #856404; border-left: 4px solid #ffeeba; margin-bottom: 16px;">
+                <strong>⚠️ Conflicto de Horario:</strong> Existe un conflicto de horario entre algunas de tus citas. Sugerimos reagendar alguna.
+            </div>
 
             <!-- Filters -->
             <div class="filter-bar">
@@ -1434,77 +1437,19 @@
                     <input type="password" id="pwd-new" placeholder="••••••••">
                 </div>
                 <div class="form-group">
-                    <label for="pwd-confirm">Confirm new password</label>
-                    <input type="password" id="pwd-confirm" placeholder="••••••••">
+                    <label for="lugar">Lugar / Consultorio:</label>
+                    <select id="lugar" required>
+                        <option value="">-- Seleccione un lugar --</option>
+                        <option value="Clínica Norte">Clínica Norte</option>
+                        <option value="Clínica Sur">Clínica Sur</option>
+                        <option value="Clínica Este">Clínica Este</option>
+                        <option value="Clínica Oeste">Clínica Oeste</option>
+                    </select>
                 </div>
-                <div id="profile-msg" class="auth-alert" style="margin-top:10px;"></div>
-                <button class="btn-primary" onclick="submitPasswordChange()" style="margin-top:8px;">Update Password</button>
-            </div>
-        </section>
-
-    </main>
-
-    <!-- ====================================================================
-         MODAL: CREATE / EDIT APPOINTMENT
-    ==================================================================== -->
-    <div class="modal-overlay" id="modal-appointment" style="display:none;">
-        <div class="modal-box">
-            <div class="modal-header">
-                <h2 id="modal-title">Schedule New Appointment</h2>
-                <button class="modal-close" onclick="closeModal()">×</button>
-            </div>
-            <div class="modal-body">
-                <form id="form-appointment">
-                    <input type="hidden" id="appt-id" value="">
-                    <div class="form-group">
-                        <label>Appointment Code</label>
-                        <p class="code-display" id="appt-code-display">Will be generated automatically</p>
-                    </div>
-                    <div class="form-group">
-                        <label for="appt-type">Specialty / Type</label>
-                        <select id="appt-type" required>
-                            <option value="">— Select specialty —</option>
-                            <option value="Odontología">Dentistry</option>
-                            <option value="Optometría">Optometry</option>
-                            <option value="Medicina General">General Medicine</option>
-                            <option value="Pediatría">Pediatrics</option>
-                            <option value="Ginecología">Gynecology</option>
-                            <option value="Cardiología">Cardiology</option>
-                            <option value="Dermatología">Dermatology</option>
-                            <option value="Psicología">Psychology</option>
-                            <option value="Exámenes de laboratorio">Lab Tests</option>
-                            <option value="Control">Follow-up</option>
-                            <option value="Cirugía">Surgery</option>
-                            <option value="Urgencias">Emergency</option>
-                            <option value="Otro">Other</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="appt-date">Date</label>
-                        <input type="date" id="appt-date" required onchange="loadAvailableSlots()">
-                    </div>
-                    <div class="form-group">
-                        <label for="appt-time">Available time slot</label>
-                        <select id="appt-time" required>
-                            <option value="">— Select a date first —</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="appt-location">Clinic / Location</label>
-                        <select id="appt-location" required>
-                            <option value="">— Select location —</option>
-                            <option value="Clínica Norte">Clínica Norte</option>
-                            <option value="Clínica Sur">Clínica Sur</option>
-                            <option value="Clínica Este">Clínica Este</option>
-                            <option value="Clínica Oeste">Clínica Oeste</option>
-                        </select>
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button class="btn-secondary" onclick="closeModal()">Cancel</button>
-                <button class="btn-primary"   onclick="saveAppointment()">Save Appointment</button>
-            </div>
+                <div style="margin-top: 20px;">
+                    <button type="submit" class="btn-primario" style="background-color: #10b981; border-color: #10b981; color: white;">Guardar Cita</button>
+                </div>
+            </form>
         </div>
     </div>
 
@@ -1753,9 +1698,10 @@
                     return;
                 }
 
-                const now = new Date();
-                let has24h = false;
-                let total = 0, pending = 0, completed = 0, cancelled = 0;
+                let hayCitasEnProximas24h = false;
+                let hayConflictoDeHorario = false;
+                const fechasHoras = new Set();
+                const ahora = new Date();
 
                 for (const appt of data) {
                     const apptTime = new Date(`${appt.fecha}T${appt.hora}:00-05:00`);
@@ -1770,15 +1716,18 @@
                         } catch { /* silent */ }
                     }
 
-                    // 24h alert
-                    if (appt.estado.toLowerCase() === 'pendiente' && diffH >= 0 && diffH <= 24) has24h = true;
+                    if (estadoMin === 'pendiente' && diffHoras >= 0 && diffHoras <= 24) {
+                        hayCitasEnProximas24h = true;
+                    }
 
-                    // Counters
-                    total++;
-                    const s = appt.estado.toLowerCase();
-                    if (s === 'pendiente') pending++;
-                    else if (s === 'completada' || s === 'asistida') completed++;
-                    else if (s === 'cancelada' || s === 'no asistida') cancelled++;
+                    if (estadoMin === 'pendiente' || estadoMin === 'completada') {
+                        const llave = `${cita.fecha}_${cita.hora}`;
+                        if (fechasHoras.has(llave)) {
+                            hayConflictoDeHorario = true;
+                        } else {
+                            fechasHoras.add(llave);
+                        }
+                    }
                 }
 
                 // Update stat cards
@@ -1788,7 +1737,12 @@
                 document.getElementById('stat-completed').textContent = completed;
                 document.getElementById('stat-cancelled').textContent = cancelled;
 
-                document.getElementById('alert-24h').style.display = has24h ? 'block' : 'none';
+                const alertaConflicto = document.getElementById('alerta-conflicto');
+                if (alertaConflicto) alertaConflicto.style.display = hayConflictoDeHorario ? 'block' : 'none';
+
+                // Guardar en cache y renderizar con filtros activos
+                listadoCitasCache = listadoCitas;
+                aplicarFiltros();
 
                 appointmentsCache = data;
                 applyFilters();
